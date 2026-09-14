@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LMS Workspace - Quản Trị Đám Mây (Cloud Edition)</title>
+    <title>Archangle LMS</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -219,8 +219,8 @@
     <!-- Login/Register -->
     <div class="overlay-bg" id="loginOverlay">
         <div class="auth-box" id="loginFormBox">
-            <h2>LMS Workspace</h2>
-            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Hệ thống quản trị và phân tích điểm số</p>
+            <h2>Archangle LMS</h2>
+            <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">A product of TNTT Archangle - Parish of Hope - Saigon Archdiocese</p>
             <form onsubmit="event.preventDefault(); login();">
                 <div class="input-group">
                     <label>Họ và tên (Tên đăng nhập)</label>
@@ -263,7 +263,7 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header"><div class="system-logo"><i class="fa-solid fa-cross"></i></div><h2>LMS Workspace</h2></div>
+        <div class="sidebar-header"><div class="system-logo"><i class="fa-solid fa-cross"></i></div><h2>Archangle LMS</h2></div>
         <div class="user-profile">
             <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
             <div class="user-info"><h4 id="displayUsername">User</h4><span class="user-role" id="displayRole">Role</span></div>
@@ -1801,7 +1801,7 @@
                         renderCurrentTab();
                         showToast("Đã phục hồi dữ liệu thành công từ Backup!", "success");
                     } else {
-                        showToast("File JSON không đúng định dạng của LMS Workspace!", "error");
+                        showToast("File JSON không đúng định dạng của Archangle LMS!", "error");
                     }
                 } catch(err) {
                     showToast("Lỗi đọc file Backup!", "error");
