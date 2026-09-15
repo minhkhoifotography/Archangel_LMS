@@ -17,116 +17,186 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
-        /* ================= CSS CỐT LÕI ================= */
+        /* ================= CSS BÙNG NỔ & LIQUID GLASS (APPLE STYLE) ================= */
         :root {
-            --bg-body: #f8fafc; --bg-sidebar: #0f172a; --text-sidebar: #94a3b8; --text-sidebar-hover: #ffffff;
-            --primary: #334155; --primary-hover: #1e293b; --accent: #ca8a04; 
-            --success: #059669; --danger: #dc2626; --warning: #d97706; --info: #0284c7;
-            --surface: #ffffff; --text-main: #1e293b; --text-muted: #64748b; --border: #e2e8f0;
-            --radius-sm: 6px; --radius-md: 8px; --radius-lg: 12px;
+            /* Tone màu lấy cảm hứng từ Logo & Cờ TNTT */
+            --tntt-blue: #0033cc;
+            --tntt-red: #dc2626;
+            --tntt-yellow: #fde047;
+            
+            /* Màu sắc cốt lõi được tinh chỉnh */
+            --bg-sidebar: rgba(15, 23, 42, 0.75); 
+            --text-sidebar: #cbd5e1; 
+            --text-sidebar-hover: #ffffff;
+            --primary: #0033cc; 
+            --primary-hover: #002299; 
+            --accent: #ca8a04; 
+            --success: #059669; 
+            --danger: #dc2626; 
+            --warning: #d97706; 
+            --info: #0284c7;
+            --text-main: #1e293b; 
+            --text-muted: #475569; 
+            
+            /* Biến Glassmorphism */
+            --glass-bg: rgba(255, 255, 255, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.6);
+            --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1);
+            
+            --radius-sm: 8px; --radius-md: 12px; --radius-lg: 20px;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
-        body { background-color: var(--bg-body); color: var(--text-main); display: flex; min-height: 100vh; overflow-x: hidden; font-size: 14px; position: relative;}
-
-        /* Hiệu ứng Đám mây */
-        .cloud-status { display: flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.8rem; transition: 0.3s; cursor: pointer; border: 1px solid transparent;}
-        .cloud-status:hover { border-color: var(--primary); }
-        .cloud-online { background: #dcfce7; color: #166534; border-color: #bbf7d0;}
-        .cloud-offline { background: #fee2e2; color: #991b1b; border-color: #fecaca;}
-        .cloud-syncing { background: #fefce8; color: #854d0e; animation: pulse 1.5s infinite; border-color: #fef08a;}
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-
-        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
-        .toast { min-width: 250px; padding: 1rem 1.5rem; border-radius: var(--radius-md); background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.3s; border-left: 4px solid var(--primary); }
-        .toast.show { transform: translateX(0); }
-        .toast.success { border-left-color: var(--success); } .toast.error { border-left-color: var(--danger); } .toast.warning { border-left-color: var(--warning); }
-        .toast-icon { font-size: 1.25rem; } .toast.success .toast-icon { color: var(--success); } .toast.error .toast-icon { color: var(--danger); } .toast.warning .toast-icon { color: var(--warning); }
-
-        .overlay-bg { 
-            position: absolute; top: 0; left: 0; width: 100%; min-height: 100%; 
-            background: linear-gradient(135deg, #0f172a 0%, #334155 100%); 
-            z-index: 9999; display: flex; justify-content: center; align-items: flex-start; 
-            overflow-y: auto; -webkit-overflow-scrolling: touch; padding: 40px 15px 60px 15px; 
-        }
-        .auth-box { 
-            background: white; padding: 2.5rem 2rem; border-radius: var(--radius-lg); 
-            width: 100%; max-width: 420px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); 
-            position: relative; margin-top: auto; margin-bottom: auto; 
+        /* Hiệu ứng Nền Mesh Gradient Động (Màu Xanh/Đỏ/Vàng hòa quyện) */
+        body { 
+            background-color: #f8fafc;
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(0, 51, 204, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 0%, rgba(220, 38, 38, 0.12) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(253, 224, 71, 0.2) 0px, transparent 50%),
+                radial-gradient(at 0% 100%, rgba(0, 51, 204, 0.15) 0px, transparent 50%);
+            background-attachment: fixed;
+            background-size: 200% 200%;
+            animation: liquidBackground 15s ease infinite;
+            color: var(--text-main); 
+            display: flex; min-height: 100vh; overflow-x: hidden; font-size: 14px; position: relative;
         }
 
-        .auth-box h2 { font-family: 'Playfair Display', serif; font-size: 1.85rem; margin-bottom: 0.5rem; text-align: center; color: var(--bg-sidebar); }
-        .input-group { margin-bottom: 1.25rem; position: relative;}
-        .input-group label { display: block; margin-bottom: 0.5rem; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; }
-        .input-group input, .input-group select { width: 100%; padding: 0.75rem 1rem; border: 1px solid var(--border); border-radius: var(--radius-md); font-size: 0.95rem; background: #f8fafc; transition: 0.2s; }
-        .input-group input:focus, .input-group select:focus { border-color: var(--primary); outline: none; background: white; }
-        .btn-primary { width: 100%; padding: 0.875rem; background: var(--primary); color: white; border: none; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; transition: 0.2s; font-size: 1rem; margin-top: 0.5rem; display: flex; align-items: center; justify-content: center;}
-        .btn-primary:hover:not(:disabled) { background: var(--primary-hover); }
-        .btn-primary:disabled { background: var(--text-muted); cursor: not-allowed; }
-        .toggle-pw { position: absolute; right: 12px; top: 38px; cursor: pointer; color: var(--text-muted); font-size: 1.1rem;}
-        .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); }
-        .auth-switch a { color: var(--info); font-weight: 600; text-decoration: none; cursor: pointer; }
+        @keyframes liquidBackground {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
 
-        /* Sidebar & Layout */
-        .sidebar { width: 260px; background: var(--bg-sidebar); color: white; display: flex; flex-direction: column; transition: left 0.3s ease; flex-shrink: 0; min-height: 100vh;}
-        .sidebar-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 12px; }
-        .system-logo { width: 36px; height: 36px; border-radius: 50%; background: #ffffff; color: #dc2626; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-        .sidebar-header h2 { font-family: 'Playfair Display', serif; font-size: 1.05rem; line-height: 1.3; margin: 0;}
-        .user-profile { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .avatar { width: 40px; height: 40px; background: var(--accent); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold;}
-        .user-info h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;}
-        .user-role { font-size: 0.7rem; color: #cbd5e1; font-weight: 500; background: rgba(255,255,255,0.1); padding: 0.2rem 0.5rem; border-radius: 4px; text-transform: uppercase;}
-        .nav-menu { padding: 1.5rem 0; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.25rem;}
-        .nav-item { padding: 0.75rem 1.5rem; display: flex; align-items: center; gap: 0.75rem; margin: 0 1rem; border-radius: var(--radius-md); color: var(--text-sidebar); text-decoration: none; transition: 0.2s; cursor: pointer; font-weight: 500; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: var(--text-sidebar-hover); }
-        .nav-item.active { background: var(--primary); color: white; }
-
-        .main-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; background: var(--bg-body); position: relative; width: 100%;}
-        .topbar { background: var(--surface); padding: 1rem 2.5rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; gap: 10px;}
+        /* Khối Nội Dung (Cards) - Hiệu ứng Liquid Glass */
+        .card, .auth-box, .topbar {
+            background: var(--glass-bg) !important;
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--glass-border) !important;
+            box-shadow: var(--glass-shadow) !important;
+        }
         
-        .year-badge { padding: 0.4rem 0.8rem; border: 1px solid #cbd5e1; border-radius: var(--radius-md); font-weight: 600; background: #f1f5f9; color: var(--primary); display: flex; align-items: center; gap: 0.5rem;}
-        .class-badge { padding: 0.5rem 1rem; border: 1px solid var(--accent); border-radius: var(--radius-md); font-weight: 600; background: #fefce8; color: #854d0e; font-size: 0.95rem; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 0.5rem;}
-        .admin-select { background: transparent; border: none; font-weight: 600; color: inherit; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer; max-width: 150px; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;}
-
-        .content-area { padding: 2.5rem; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%;}
-        .page-header { margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap;}
-        .page-header h1 { font-family: 'Playfair Display', serif; font-size: 2rem; color: var(--bg-sidebar); font-weight: 600;}
-        .page-header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 0.95rem;}
-        
-        .tab-content { display: none; animation: fadeIn 0.3s ease; }
-        .tab-content.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        
-        @keyframes popIn { 0% { opacity: 0; transform: scale(0.5); } 80% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
-
-        .card { background: var(--surface); border-radius: var(--radius-lg); box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--border); margin-bottom: 1.5rem; overflow: hidden;}
-        .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border); font-weight: 600; display: flex; justify-content: space-between; align-items: center; background: #fafafa; flex-wrap: wrap; gap: 10px;}
+        .card { border-radius: var(--radius-lg); margin-bottom: 1.5rem; overflow: hidden; transition: transform 0.3s; }
+        .card:hover { box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.15) !important; transform: translateY(-2px); }
+        .card-header { padding: 1.25rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.4); font-weight: 600; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.5); flex-wrap: wrap; gap: 10px;}
         .card-body { padding: 1.5rem; }
 
-        .btn-action, .btn-save, .btn-reject, .btn-lock, .btn-locked, .btn-outline { padding: 0.6rem 1.2rem; border: none; border-radius: var(--radius-md); font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: 0.2s;}
-        .btn-action { background: var(--primary); color: white;} .btn-action:hover { background: var(--primary-hover); }
-        .btn-save { background: var(--success); color: white;} .btn-save:hover { background: #047857; }
-        .btn-reject { background: var(--danger); color: white;} .btn-reject:hover { background: #991b1b; }
-        .btn-lock { background: var(--warning); color: white; font-weight: 600;}
-        .btn-locked { background: var(--text-muted); color: white; cursor: not-allowed; font-weight: 600;}
-        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-main); }
+        /* Sidebar Glass (Kính Tối Màu) */
+        .sidebar { 
+            width: 260px; 
+            background: var(--bg-sidebar); 
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+            color: white; display: flex; flex-direction: column; transition: left 0.3s ease; flex-shrink: 0; min-height: 100vh;
+        }
+        .sidebar-header { padding: 1.2rem 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.1); display: flex; align-items: center; gap: 12px; }
+        .system-logo { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #ffffff, #f1f5f9); color: var(--danger); display: flex; align-items: center; justify-content: center; font-size: 1.3rem; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+        .sidebar-header h2 { font-family: 'Playfair Display', serif; font-size: 1.1rem; line-height: 1.3; margin: 0; text-shadow: 0 2px 4px rgba(0,0,0,0.3);}
+        .user-profile { padding: 1.5rem; display: flex; align-items: center; gap: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .avatar { width: 42px; height: 42px; background: linear-gradient(135deg, var(--tntt-blue), var(--info)); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.2);}
+        .user-info h4 { font-size: 0.875rem; font-weight: 600; margin-bottom: 0.25rem; color: #f8fafc; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;}
+        .user-role { font-size: 0.7rem; color: #cbd5e1; font-weight: 500; background: rgba(255,255,255,0.15); padding: 0.2rem 0.6rem; border-radius: 12px; text-transform: uppercase; border: 1px solid rgba(255,255,255,0.1);}
+        
+        .nav-menu { padding: 1.5rem 0; flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 0.35rem;}
+        .nav-item { padding: 0.85rem 1.5rem; display: flex; align-items: center; gap: 1rem; margin: 0 1rem; border-radius: var(--radius-md); color: var(--text-sidebar); text-decoration: none; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; font-weight: 500; border: 1px solid transparent;}
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: var(--text-sidebar-hover); transform: translateX(4px); }
+        .nav-item.active { 
+            background: linear-gradient(135deg, var(--tntt-blue) 0%, #3b82f6 100%); 
+            color: white; 
+            border: 1px solid rgba(255,255,255,0.2);
+            box-shadow: 0 4px 15px rgba(0, 51, 204, 0.4);
+        }
 
-        .table-responsive { overflow-x: auto; border: 1px solid var(--border); border-radius: var(--radius-md); background: white; -webkit-overflow-scrolling: touch; }
-        .excel-table { width: 100%; border-collapse: collapse; min-width: 800px; font-size: 0.85rem;}
-        .excel-table th, .excel-table td { padding: 0.5rem 0.75rem; border: 1px solid var(--border); vertical-align: middle; text-align: center; }
-        .excel-table th { font-weight: 600; background: #f1f5f9; white-space: nowrap; color: var(--primary); }
+        /* Nút bấm (Buttons) - Hiệu ứng bóng bẩy */
+        .btn-action, .btn-save, .btn-reject, .btn-lock, .btn-locked, .btn-outline, .btn-primary { 
+            padding: 0.7rem 1.4rem; border: none; border-radius: var(--radius-md); font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 0.5rem; transition: all 0.3s; 
+            backdrop-filter: blur(5px);
+        }
+        .btn-action, .btn-primary { background: linear-gradient(135deg, var(--tntt-blue), #3b82f6); color: white; box-shadow: 0 4px 15px rgba(0, 51, 204, 0.3);} 
+        .btn-action:hover, .btn-primary:hover { background: linear-gradient(135deg, #002299, var(--tntt-blue)); transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 51, 204, 0.4); }
+        .btn-save { background: linear-gradient(135deg, var(--success), #10b981); color: white; box-shadow: 0 4px 15px rgba(5, 150, 105, 0.3);} 
+        .btn-save:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5, 150, 105, 0.4);}
+        .btn-reject { background: linear-gradient(135deg, var(--danger), #ef4444); color: white; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.3);} 
+        .btn-reject:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(220, 38, 38, 0.4);}
+        .btn-outline { background: rgba(255,255,255,0.5); border: 1px solid var(--primary); color: var(--primary); }
+        .btn-outline:hover { background: var(--primary); color: white; }
+
+        /* Bảng Dữ Liệu (Tables) - Trong suốt & Tinh tế */
+        .table-responsive { overflow-x: auto; border: 1px solid var(--glass-border); border-radius: var(--radius-md); background: rgba(255,255,255,0.4); -webkit-overflow-scrolling: touch; }
+        .excel-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 800px; font-size: 0.85rem;}
+        .excel-table th, .excel-table td { padding: 0.75rem; border-bottom: 1px solid rgba(255,255,255,0.6); vertical-align: middle; text-align: center; }
+        .excel-table th { font-weight: 700; background: rgba(255,255,255,0.6); white-space: nowrap; color: var(--primary); backdrop-filter: blur(10px); }
         .excel-table td.text-left { text-align: left; }
+        .excel-table tr { transition: background 0.2s; }
+        .excel-table tr:hover td { background: rgba(255, 255, 255, 0.5); }
         
-        .excel-input { width: 100%; padding: 0.5rem; border: 1px solid transparent; background: transparent; text-align: center; font-size: 0.85rem; transition: 0.2s; border-radius: 4px; font-weight: 500; min-width: 60px;}
-        .excel-input:hover:not(:disabled) { border-color: var(--border); background: #f8fafc;}
-        .excel-input:focus:not(:disabled) { border-color: var(--primary); background: white; outline: none; box-shadow: 0 0 0 2px rgba(51, 65, 85, 0.1); }
-        .excel-input:disabled { background: transparent; color: var(--text-main); font-weight: 600;}
-        .excel-input.text-left { text-align: left; }
-        .new-row-input { border: 1px solid #cbd5e1; background: #fff; min-width: 100px; }
-        .new-row-input:focus { border-color: var(--success); }
+        /* Inputs - Kính mờ */
+        .excel-input, .input-group input, .input-group select, .form-group input, .form-group select, .form-group textarea, .att-select { 
+            width: 100%; padding: 0.6rem; border: 1px solid rgba(255,255,255,0.8); background: rgba(255,255,255,0.5); 
+            text-align: center; font-size: 0.9rem; transition: all 0.3s; border-radius: var(--radius-sm); font-weight: 500; min-width: 60px;
+            color: var(--text-main); backdrop-filter: blur(5px);
+        }
+        .excel-input.text-left, .input-group input, .form-group input { text-align: left; }
+        .excel-input:hover:not(:disabled), .input-group input:hover, .form-group input:hover { background: rgba(255,255,255,0.8); }
+        .excel-input:focus:not(:disabled), .input-group input:focus, .form-group input:focus { 
+            border-color: var(--tntt-blue); background: #ffffff; outline: none; 
+            box-shadow: 0 0 0 3px rgba(0, 51, 204, 0.15); 
+        }
 
-        .badge-admin { background: #fee2e2; color: #991b1b; padding: 0.25rem 0.5rem; border-radius: 4px; font-weight: 600; font-size: 0.75rem; text-transform: uppercase; border: 1px solid #fecaca; }
+        /* Layout & Header */
+        .main-content { flex: 1; overflow-y: auto; display: flex; flex-direction: column; position: relative; width: 100%; z-index: 1;}
+        .topbar { padding: 1rem 2.5rem; display: flex; justify-content: space-between; align-items: center; position: sticky; top: 0; z-index: 10; gap: 10px; border-radius: 0 0 var(--radius-lg) var(--radius-lg); border-top: none !important;}
         
+        .year-badge { padding: 0.5rem 1rem; border: 1px solid var(--glass-border); border-radius: var(--radius-md); font-weight: 600; background: rgba(255,255,255,0.6); color: var(--primary); display: flex; align-items: center; gap: 0.5rem; backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        .class-badge { padding: 0.5rem 1rem; border: 1px solid rgba(253, 224, 71, 0.5); border-radius: var(--radius-md); font-weight: 600; background: rgba(254, 252, 232, 0.8); color: #b45309; font-size: 1rem; font-family: 'Playfair Display', serif; display: flex; align-items: center; gap: 0.5rem; backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        .admin-select { background: transparent; border: none; font-weight: 600; color: inherit; font-family: inherit; font-size: 0.95rem; outline: none; cursor: pointer;}
+
+        .content-area { padding: 2.5rem; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%;}
+        .page-header { margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: flex-end; gap: 1rem; flex-wrap: wrap;}
+        .page-header h1 { font-family: 'Playfair Display', serif; font-size: 2.2rem; background: linear-gradient(135deg, var(--tntt-blue), var(--tntt-red)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,0.05);}
+        .page-header p { color: var(--text-muted); margin-top: 0.5rem; font-size: 1rem; font-weight: 500;}
+
+        /* Hiệu ứng Đám mây */
+        .cloud-status { display: flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-weight: 600; font-size: 0.85rem; transition: 0.3s; cursor: pointer; border: 1px solid var(--glass-border); backdrop-filter: blur(10px); box-shadow: 0 2px 10px rgba(0,0,0,0.05);}
+        .cloud-online { background: rgba(220, 252, 231, 0.8); color: #166534; }
+        .cloud-offline { background: rgba(254, 226, 226, 0.8); color: #991b1b; }
+        .cloud-syncing { background: rgba(254, 252, 232, 0.8); color: #854d0e; animation: pulse 1.5s infinite; }
+
+        .tab-content { display: none; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .tab-content.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes popIn { 0% { opacity: 0; transform: scale(0.8); } 80% { transform: scale(1.05); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+        /* Auth Overlays Glass */
+        .overlay-bg { 
+            position: absolute; top: 0; left: 0; width: 100%; min-height: 100%; 
+            background: rgba(15, 23, 42, 0.4); 
+            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 9999; display: flex; justify-content: center; align-items: center; 
+        }
+        .auth-box { 
+            width: 100%; max-width: 420px; padding: 3rem 2.5rem; 
+            border-radius: var(--radius-lg); 
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4); 
+        }
+        .auth-box h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
+
+        /* Toast Glass */
+        #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
+        .toast { min-width: 250px; padding: 1rem 1.5rem; border-radius: var(--radius-md); background: rgba(255,255,255,0.85); backdrop-filter: blur(16px); box-shadow: var(--glass-shadow); display: flex; align-items: center; gap: 12px; transform: translateX(120%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); border-left: 5px solid var(--primary); }
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left-color: var(--success); } .toast.error { border-left-color: var(--danger); } .toast.warning { border-left-color: var(--warning); }
+        .toast-icon { font-size: 1.5rem; } .toast.success .toast-icon { color: var(--success); } .toast.error .toast-icon { color: var(--danger); } .toast.warning .toast-icon { color: var(--warning); }
+
+        /* Wheel Tab Tuning for Apple Style */
+        #tab-wheel .card { 
+            background: rgba(255,255,255,0.4) !important; 
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1), inset 0 0 20px rgba(255,255,255,0.8) !important;
+            border: 1px solid rgba(255,255,255,0.7) !important;
+        }
         /* CSS PHÂN QUYỀN TỔ CHỨC */
         .role-badge { font-size: 0.65rem; padding: 0.2rem 0.5rem; border-radius: 4px; font-weight: 800; margin-left: 5px; text-transform: uppercase; cursor: pointer; transition: 0.2s;}
         .role-member { background: #f1f5f9; color: #94a3b8; border: 1px solid #e2e8f0; }
