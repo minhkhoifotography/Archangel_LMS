@@ -2324,7 +2324,6 @@
                 isSpinning = true;
                 isSlowingDown = false;
                 
-                document.getElementById('winnerName').innerText = "ĐANG QUAY TỐC ĐỘ CAO...";
                 document.getElementById('spinBtnCenter').innerHTML = '<span style="font-weight: 900; color: var(--danger); font-size: 1.2rem;">DỪNG</span>';
 
                 if(audioCtx.state === 'suspended') audioCtx.resume();
@@ -2351,6 +2350,22 @@
                 startAngle += (spinAngle * Math.PI / 180);
             }
             
+            // --- CẬP NHẬT TÊN LƯỚT QUA LIÊN TỤC ---
+            // Tính toán góc hiện tại để biết mũi tên đang chỉ vào ô nào
+            let degrees = (startAngle * 180 / Math.PI) + 90;
+            let arcd = arc * 180 / Math.PI;
+            // Chuẩn hóa góc về chuẩn 0-360 độ
+            let normalizedDegrees = (360 - (degrees % 360)) % 360; 
+            let currentIndex = Math.floor(normalizedDegrees / arcd);
+            
+            // Đảm bảo không bị lỗi vượt quá mảng
+            if (currentIndex >= wheelNames.length) currentIndex = 0;
+            
+            // Ép text hiển thị tên hiện tại liên tục
+            document.getElementById('winnerName').innerText = wheelNames[currentIndex];
+            // -------------------------------------
+            
+            // Phát âm thanh khi vượt qua vạch chia
             if (Math.floor(oldAngle / arc) !== Math.floor(startAngle / arc)) {
                 playTickSound();
             }
