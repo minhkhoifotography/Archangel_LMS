@@ -17,6 +17,16 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
     
     <style>
+        /* Hiệu ứng bóng ma (Ghost) khi kéo thả học sinh */
+        .sortable-ghost { 
+            opacity: 0.3; 
+            background-color: #cbd5e1 !important; 
+            border: 2px dashed var(--primary) !important;
+            border-radius: var(--radius-md);
+        }
+        .sortable-new-team-zone:hover {
+            background-color: rgba(59, 130, 246, 0.1);
+        }
         /* ================= CSS BÙNG NỔ & LIQUID GLASS (APPLE STYLE) ================= */
         :root {
             /* Tone màu lấy cảm hứng từ Logo & Cờ TNTT */
@@ -333,11 +343,17 @@
 
     <!-- Sidebar -->
     <aside class="sidebar">
-        <div class="sidebar-header"><div class="system-logo"><i class="fa-solid fa-cross"></i></div><h2>Archangle LMS</h2></div>
-        <div class="user-profile">
-            <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
-            <div class="user-info"><h4 id="displayUsername">User</h4><span class="user-role" id="displayRole">Role</span></div>
-        </div>
+        <div class="sidebar-header">
+    <div class="system-logo" style="overflow: hidden; padding: 2px; background: white;">
+        <img src="Logo.jpg" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; border-radius: 50%;">
+    </div>
+    <h2>Archangle LMS</h2>
+</div>
+        <!-- Cập nhật thẻ user-profile cho phép click -->
+     <div class="user-profile" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'" onclick="switchTab('profile', null)" title="Nhấn để xem Hồ Sơ Cá Nhân">
+        <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
+        <div class="user-info"><h4 id="displayUsername">User</h4><span class="user-role" id="displayRole">Role</span></div>
+    </div>
         <nav class="nav-menu">
             <div class="nav-item active" data-tab="dashboard" onclick="switchTab('dashboard', this)"><i class="fa-solid fa-chart-line"></i> Tổng Quan Lớp</div>
             <div class="nav-item" data-tab="students" onclick="switchTab('students', this)"><i class="fa-solid fa-address-book"></i> Hồ Sơ Học Sinh</div>
@@ -354,8 +370,7 @@
             <div class="nav-item" data-tab="system-admin" id="navSystemAdmin" onclick="switchTab('system-admin', this)" style="display:none; color: #fca5a5; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-server"></i> Quản Trị Phân Quyền</div>
             <div class="nav-item" data-tab="year-admin" id="navYearAdmin" onclick="switchTab('year-admin', this)" style="display:none; color: #93c5fd; font-weight: bold;"><i class="fa-solid fa-calendar-check"></i> Quản Trị Năm Học</div>
 
-            <div class="nav-item" data-tab="profile" onclick="switchTab('profile', this)" style="border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-id-badge"></i> Hồ Sơ Cá Nhân</div>
-            <div style="flex: 1;"></div>
+            <div class="nav-item" data-tab="profile" onclick="switchTab('profile', this)" style="display: none;"><i class="fa-solid fa-id-badge"></i> Hồ Sơ Cá Nhân</div>
             <div class="nav-item" onclick="logout()" style="color: #f87171; margin-bottom: 1rem;"><i class="fa-solid fa-power-off"></i> Đăng xuất</div>
         </nav>
     </aside>
@@ -1485,13 +1500,13 @@
             showToast(state.settings[`${setKey}Locked`] ? "Đã khóa bảng điểm!" : "Đã mở khóa bảng điểm!", "success");
         }
 
+        // ================= THAY THẾ HÀM RENDERBEHAVIORTEAMS HIỆN TẠI BẰNG ĐOẠN NÀY =================
         function renderBehaviorTeams() {
             const grid = document.getElementById('gradingGrid'); if (!grid) return; grid.innerHTML = '';
             let canGrade = currentUser.role !== 'collab'; document.getElementById('sysNoticeThiDua').style.display = canGrade ? 'none' : 'block';
 
             if (!state.teams || state.teams.length === 0) {
                 grid.innerHTML = `<div style="grid-column: 1 / -1; height: 120px; display:flex; align-items:center; justify-content:center; color: #94a3b8; font-style: italic;">Chưa có tổ nào được khởi tạo.</div>`;
-                return;
             }
 
             state.teams.forEach(t => {
@@ -1516,13 +1531,14 @@
                     let roleClass = m.role === 'leader' ? 'role-leader' : (m.role === 'deputy' ? 'role-deputy' : 'role-member');
                     let roleLabel = m.role === 'leader' ? 'T.Trưởng' : (m.role === 'deputy' ? 'T.Phó' : 'T.Viên');
                     let roleBadge = `<span class="role-badge ${roleClass}" onclick="event.stopPropagation(); toggleRole(${t.id}, ${m.id})" title="Nhấn để đổi chức vụ">${roleLabel}</span>`;
-                    
                     let starColor = m.flagged ? '#eab308' : '#cbd5e1'; 
                     let starIcon = `<i class="fa-solid fa-star" style="color: ${starColor}; cursor: pointer; margin-right: 5px; font-size: 1.1rem; transition: 0.2s;" onclick="event.stopPropagation(); toggleFlag(${t.id}, ${m.id})" title="Đánh dấu chú ý"></i>`;
                     
-                    let moveSelect = canGrade ? `<select onchange="event.stopPropagation(); moveStudent(${t.id}, ${m.id}, this.value)" style="margin-left: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 0.75rem; color: var(--text-muted); background: #f8fafc; padding: 2px; outline: none; cursor: pointer;" onclick="event.stopPropagation();"><option value="" disabled selected>Chuyển...</option>${state.teams.map(tm => tm.id !== t.id ? `<option value="${tm.id}">${tm.name}</option>` : '').join('')}</select>` : '';
+                    // Xóa moveSelect cũ (dropdown) vì ta đã dùng kéo thả
+                    let moveSelect = ''; 
 
-                    membersHtml += `<div class="expandable-item"><div class="item-header" onclick="this.nextElementSibling.classList.toggle('active')"><div style="display:flex; align-items:center; flex-wrap:wrap; flex:1;">${starIcon} <b>${esc(m.name)}</b> ${roleBadge} ${moveSelect} <span style="font-size:0.75rem; color:var(--text-muted); margin-left:auto;">${mPts} pt</span></div><i class="fa-solid fa-chevron-down" style="color:var(--text-muted); font-size:0.8rem; margin-left:10px;"></i></div><div class="item-details">${btns || '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">Bạn không có quyền chấm điểm</p>'}</div></div>`;
+                    // THÊM DATA-STUDENT-ID VÀO ĐÂY ĐỂ JS NHẬN DIỆN KHI KÉO THẢ
+                    membersHtml += `<div class="expandable-item" data-student-id="${m.id}" style="${canGrade ? 'cursor: grab;' : ''}"><div class="item-header" onclick="this.nextElementSibling.classList.toggle('active')"><div style="display:flex; align-items:center; flex-wrap:wrap; flex:1;">${starIcon} <b style="pointer-events: none;">${esc(m.name)}</b> ${roleBadge} ${moveSelect} <span style="font-size:0.75rem; color:var(--text-muted); margin-left:auto;">${mPts} pt</span></div><i class="fa-solid fa-chevron-down" style="color:var(--text-muted); font-size:0.8rem; margin-left:10px;"></i></div><div class="item-details" style="cursor: default;" onclick="event.stopPropagation()">${btns || '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">Bạn không có quyền chấm điểm</p>'}</div></div>`;
                 });
 
                 let tBtns = '';
@@ -1537,10 +1553,144 @@
                 let teamNameInput = `<input type="text" class="excel-input" value="${esc(t.name)}" onblur="updateTeamName(${t.id}, this.value)" style="font-weight:700; font-size:1.1rem; text-align:left; width:130px; padding:0.2rem 0.5rem; color:var(--primary); background:transparent; ${canGrade ? 'border-bottom: 1px dashed #cbd5e1;' : 'border:none;'}" ${canGrade ? '' : 'disabled'} title="Nhấn vào để sửa tên tổ">`;
                 let walletBadge = `<span style="background:#10b981; color:white; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; margin-left:5px; white-space:nowrap; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);" title="Ví tiền thưởng"><i class="fa-solid fa-wallet"></i> ${viTien} ₫</span>`;
 
-                grid.innerHTML += `<div class="card team-card"><div class="card-header" style="background:#f8fafc; display:flex; align-items:center; flex-wrap:wrap; gap:5px;"><span style="font-size:1.2rem;">${t.icon}</span> ${teamNameInput} <div style="margin-left:auto; display:flex; align-items:center;"> <span style="background:var(--accent); color:white; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; white-space:nowrap;">${tPts} pt</span> ${walletBadge} </div></div><div class="card-body" style="padding:1rem;"><div class="expandable-item" style="border-color:var(--accent); background:#fefce8; margin-bottom:1rem;"><div class="item-header" onclick="this.nextElementSibling.classList.toggle('active')"><span style="color:#854d0e; font-weight:600;"><i class="fa-solid fa-star"></i> Điểm Tập Thể Tổ</span><i class="fa-solid fa-chevron-down"></i></div><div class="item-details">${tBtns || '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">Bạn không có quyền chấm điểm</p>'}</div></div>${membersHtml}</div></div>`;
+                // WRAPPER CHO LIST HỌC SINH ĐỂ KÉO THẢ
+                let sortableContainer = `<div class="sortable-team-list" data-team-id="${t.id}" style="min-height: 50px; padding-bottom: 20px;">${membersHtml}</div>`;
+
+                grid.innerHTML += `<div class="card team-card"><div class="card-header" style="background:#f8fafc; display:flex; align-items:center; flex-wrap:wrap; gap:5px;"><span style="font-size:1.2rem;">${t.icon}</span> ${teamNameInput} <div style="margin-left:auto; display:flex; align-items:center;"> <span style="background:var(--accent); color:white; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; white-space:nowrap;">${tPts} pt</span> ${walletBadge} </div></div><div class="card-body" style="padding:1rem;"><div class="expandable-item" style="border-color:var(--accent); background:#fefce8; margin-bottom:1rem;"><div class="item-header" onclick="this.nextElementSibling.classList.toggle('active')"><span style="color:#854d0e; font-weight:600;"><i class="fa-solid fa-star"></i> Điểm Tập Thể Tổ</span><i class="fa-solid fa-chevron-down"></i></div><div class="item-details">${tBtns || '<p style="text-align:center; color:var(--text-muted); font-size:0.85rem;">Bạn không có quyền chấm điểm</p>'}</div></div>${sortableContainer}</div></div>`;
             });
+
+            // THÊM KHU VỰC "DROPZONE" TẠO TỔ MỚI Ở CUỐI CÙNG
+            if(canGrade) {
+                grid.innerHTML += `
+                <div class="card team-card" style="border: 2px dashed #94a3b8; background: transparent; box-shadow: none; display: flex; align-items: center; justify-content: center; min-height: 200px;">
+                    <div class="card-body sortable-new-team-zone" style="width: 100%; height: 100%; min-height: 150px; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; color: var(--text-muted); cursor: pointer;" onclick="createNewEmptyTeam()">
+                        <i class="fa-solid fa-users-viewfinder" style="font-size: 2.5rem; margin-bottom: 10px; color: var(--primary); opacity: 0.5;"></i>
+                        <p style="font-weight: 600;">Kéo thả học sinh vào đây<br>để <span style="color:var(--success);">Tách Tổ Mới</span></p>
+                        <p style="font-size: 0.8rem; margin-top: 5px;">(Hoặc click vào để tạo Tổ rỗng)</p>
+                    </div>
+                </div>`;
+                
+                // Khởi tạo thư viện kéo thả sau khi render HTML xong
+                setTimeout(initSortableTeams, 100);
+            }
         }
 
+        // ================= CÁC HÀM XỬ LÝ KÉO THẢ MỚI THÊM =================
+        function initSortableTeams() {
+            // 1. Khởi tạo kéo thả giữa các tổ hiện có
+            const teamLists = document.querySelectorAll('.sortable-team-list');
+            teamLists.forEach(list => {
+                new Sortable(list, {
+                    group: 'shared-teams',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost', // Style mờ khi kéo
+                    handle: '.item-header', // Chỉ cho phép nắm kéo ở header
+                    onEnd: function (evt) {
+                        const itemEl = evt.item;
+                        const toList = evt.to;
+                        const fromList = evt.from;
+                        
+                        if (toList === fromList) return; // Nếu rớt lại vị trí cũ thì bỏ qua
+
+                        // Nếu thả vào vùng tạo tổ mới, logic onAdd của vùng đó sẽ tự xử lý, ta return ở đây
+                        if(toList.classList.contains('sortable-new-team-zone')) return;
+
+                        const studentId = itemEl.getAttribute('data-student-id');
+                        const oldTeamId = fromList.getAttribute('data-team-id');
+                        const newTeamId = toList.getAttribute('data-team-id');
+
+                        moveStudentDragDrop(oldTeamId, studentId, newTeamId);
+                    },
+                });
+            });
+
+            // 2. Khởi tạo vùng "Kéo vào tạo tổ mới"
+            const newTeamZone = document.querySelector('.sortable-new-team-zone');
+            if(newTeamZone) {
+                new Sortable(newTeamZone, {
+                    group: 'shared-teams',
+                    animation: 150,
+                    ghostClass: 'sortable-ghost',
+                    onAdd: function (evt) {
+                        const itemEl = evt.item;
+                        const fromList = evt.from;
+                        
+                        const studentId = itemEl.getAttribute('data-student-id');
+                        const oldTeamId = fromList.getAttribute('data-team-id');
+
+                        moveStudentToNewTeam(oldTeamId, studentId);
+                    }
+                });
+            }
+        }
+
+        function moveStudentDragDrop(oldTeamIdStr, studentIdStr, newTeamIdStr) {
+            let oldTeamId = parseInt(oldTeamIdStr);
+            let studentId = parseInt(studentIdStr);
+            let newTeamId = parseInt(newTeamIdStr);
+
+            let oldTeam = state.teams.find(x => x.id == oldTeamId);
+            let newTeam = state.teams.find(x => x.id == newTeamId);
+            
+            let studentIndex = oldTeam.members.findIndex(x => x.id == studentId);
+            if(studentIndex > -1) {
+                let student = oldTeam.members.splice(studentIndex, 1)[0];
+                newTeam.members.push(student);
+                autoSave(); 
+                
+                // Render lại để đồng bộ điểm số của Tổ
+                renderBehaviorTeams(); 
+                renderStudentProfiles(); 
+                if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+                showToast(`Đã chuyển ${student.name} sang ${newTeam.name}`, "success");
+            }
+        }
+
+        function moveStudentToNewTeam(oldTeamIdStr, studentIdStr) {
+            let oldTeamId = parseInt(oldTeamIdStr);
+            let studentId = parseInt(studentIdStr);
+            
+            let oldTeam = state.teams.find(x => x.id == oldTeamId);
+            let studentIndex = oldTeam.members.findIndex(x => x.id == studentId);
+            
+            if(studentIndex > -1) {
+                let student = oldTeam.members.splice(studentIndex, 1)[0];
+                
+                // Tạo ID và dữ liệu cho team mới
+                let newTeamId = Date.now();
+                let newTeamIndex = state.teams.length + 1;
+                let newTeam = { 
+                    id: newTeamId, 
+                    name: `Tổ ${newTeamIndex}`, 
+                    icon: ICONS[newTeamIndex % ICONS.length], 
+                    stats: { thuoc100: 0, troChoi: 0, trucNhat: 0, matTratTu: 0, thieuBai: 0, viTien: 0 }, 
+                    members: [student] 
+                };
+                
+                state.teams.push(newTeam);
+                autoSave();
+                
+                renderBehaviorTeams(); 
+                renderStudentProfiles();
+                showToast(`Đã tách ${student.name} ra tạo thành Tổ mới!`, "success");
+            }
+        }
+
+        function createNewEmptyTeam() {
+             let newTeamId = Date.now();
+             let newTeamIndex = state.teams.length + 1;
+             let newTeam = { 
+                id: newTeamId, 
+                name: `Tổ ${newTeamIndex}`, 
+                icon: ICONS[newTeamIndex % ICONS.length], 
+                stats: { thuoc100: 0, troChoi: 0, trucNhat: 0, matTratTu: 0, thieuBai: 0, viTien: 0 }, 
+                members: [] 
+             };
+             state.teams.push(newTeam);
+             autoSave();
+             renderBehaviorTeams();
+             showToast("Đã tạo Tổ mới thành công!", "success");
+        }
         function toggleFlag(tId, mId) {
             if(currentUser.role === 'collab') return;
             let t = state.teams.find(x => x.id == tId); let m = t.members.find(x => x.id == mId);
