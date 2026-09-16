@@ -200,6 +200,26 @@
             align-items: center;
             width: 100%;
         }
+        /* --- TĂNG KHOẢNG CÁCH (SPACING) CHO CÁC FORM --- */
+        .input-group { 
+            margin-bottom: 1.5rem; /* Đẩy khoảng cách giữa các khối nhập liệu xa nhau ra */
+            position: relative;
+        }
+        
+        .input-group label { 
+            display: block; 
+            margin-bottom: 0.6rem; /* Tạo khoảng trống giữa dòng chữ (Label) và ô nhập (Input) */
+            font-size: 0.85rem; 
+            font-weight: 600; 
+            color: var(--text-muted); 
+            text-transform: uppercase; 
+            letter-spacing: 0.5px; /* Kéo giãn khoảng cách các chữ cái ra một xíu cho sang */
+        }
+        
+        .auth-box form .btn-primary {
+            margin-top: 1.5rem; /* Đẩy nút Đăng Nhập cách xa ô Mật khẩu ra */
+            padding: 0.85rem; /* Làm nút to và dễ bấm hơn */
+        }
 
         .toggle-pw {
             position: absolute;
