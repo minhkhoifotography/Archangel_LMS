@@ -193,6 +193,39 @@
             box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.4); 
         }
         .auth-box h2 { font-family: 'Playfair Display', serif; font-size: 2.2rem; margin-bottom: 0.5rem; text-align: center; color: var(--primary); }
+        /* --- SỬA LỖI UI Ô NHẬP MẬT KHẨU --- */
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+            width: 100%;
+        }
+
+        .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%; /* Canh giữa theo chiều dọc */
+            transform: translateY(-50%); /* Kéo ngược lên 50% của chính nó để căn giữa tuyệt đối */
+            cursor: pointer;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            z-index: 10;
+            transition: color 0.2s;
+        }
+
+        .toggle-pw:hover {
+            color: var(--tntt-blue);
+        }
+
+        /* Đẩy chữ bên trong input thụt vào để không bị đè lên con mắt khi gõ dài */
+        .input-wrapper input {
+            padding-right: 2.5rem !important;
+        }
+        
+        /* Làm đẹp lại phần link bên dưới form */
+        .auth-switch { text-align: center; margin-top: 1.5rem; font-size: 0.9rem; color: var(--text-muted); display: flex; flex-direction: column; gap: 10px; }
+        .auth-switch a { color: var(--primary); font-weight: 600; text-decoration: none; cursor: pointer; transition: 0.2s; }
+        .auth-switch a:hover { opacity: 0.8; text-decoration: underline; }
 
         /* Toast Glass */
         #toast-container { position: fixed; bottom: 20px; right: 20px; z-index: 10000; display: flex; flex-direction: column; gap: 10px; }
@@ -306,10 +339,12 @@
                     <label>Họ và tên (Tên đăng nhập)</label>
                     <input type="text" id="loginUsername" placeholder="VD: admin / Micae Lưu Minh Khôi" required>
                 </div>
-                <div class="input-group">
-                    <label>Mật khẩu</label>
-                    <input type="password" id="loginPassword" placeholder="Nhập mật khẩu (Mặc định: 1)" required>
-                    <i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('loginPassword')"></i>
+               <div class="input-group">
+                        <label>Mật khẩu</label>
+                        <div class="input-wrapper">
+                        <input type="password" id="regPassword" required>
+                        <i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('regPassword')"></i>
+                    </div>
                 </div>
                 <button type="submit" class="btn-primary" id="btnLogin"><i class="fa-solid fa-right-to-bracket" style="margin-right: 8px;"></i> Đăng Nhập</button>
             </form>
@@ -334,8 +369,20 @@
             <h2>Cập Nhật Bảo Mật</h2>
             <p style="text-align: center; color: var(--text-muted); margin-bottom: 2rem;">Bạn đang dùng mật khẩu mặc định (1). Vui lòng thiết lập mật khẩu cá nhân.</p>
             <form onsubmit="event.preventDefault(); submitNewPassword();">
-                <div class="input-group"><label>Mật khẩu mới</label><input type="password" id="newPass" required><i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('newPass')"></i></div>
-                <div class="input-group"><label>Xác nhận mật khẩu</label><input type="password" id="confirmNewPass" required><i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('confirmNewPass')"></i></div>
+                <div class="input-group">
+    <label>Mật khẩu mới</label>
+    <div class="input-wrapper">
+        <input type="password" id="newPass" required>
+        <i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('newPass')"></i>
+    </div>
+</div>
+<div class="input-group">
+    <label>Xác nhận mật khẩu</label>
+    <div class="input-wrapper">
+        <input type="password" id="confirmNewPass" required>
+        <i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('confirmNewPass')"></i>
+    </div>
+</div>
                 <button type="submit" class="btn-primary" style="background: var(--success);"><i class="fa-solid fa-shield-halved" style="margin-right: 8px;"></i> Lưu & Truy Cập</button>
             </form>
         </div>
@@ -726,12 +773,14 @@
                         <hr style="border: 0; border-top: 1px solid var(--border); margin: 2rem 0;">
                         <h3 style="font-family: 'Playfair Display', serif; font-size: 1.25rem; margin-bottom: 1rem;">Bảo Mật Mật Khẩu (Toàn Cục)</h3>
                         <form onsubmit="event.preventDefault(); changeMyPassword();">
-                            <div class="form-group" style="position: relative;"><label>Mật khẩu mới</label><input type="password" id="profNewPass" required><i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('profNewPass')"></i></div>
-                            <button type="submit" class="btn-action btn-outline"><i class="fa-solid fa-key"></i> Lưu Mật Khẩu</button>
-                        </form>
+                            <div class="form-group">
+                                <label>Mật khẩu mới</label>
+                                <div class="input-wrapper">
+                                <input type="password" id="profNewPass" required>
+                                <i class="fa-solid fa-eye toggle-pw" onclick="togglePasswordVisibility('profNewPass')"></i>
+                            </div>
+                        </div>
                     </div>
-                </div>
-            </div>
 
             <!-- System Admin Tab -->
             <div id="tab-system-admin" class="tab-content">
