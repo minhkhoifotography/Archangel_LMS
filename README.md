@@ -22,11 +22,10 @@ SheetJS (xlsx) để đọc, xuất dữ liệu file Excel.
 Canvas-Confetti cho hiệu ứng Vòng quay may mắn.
 ⚙️ Hướng dẫn cài đặt và Cấu hình (Setup & Configuration)
 Do hệ thống sử dụng CDN và Backend-as-a-Service (Firebase), bạn không cần cài đặt Node.js hay các framework phức tạp. Chỉ cần cấu hình các dịch vụ bên thứ 3 và chạy file index.html.
-
 1. Cấu hình Google Firebase
 Truy cập Firebase Console và tạo một Project mới.
 Đăng ký Web App và copy đoạn config của bạn.
-3.  Mở file index.html, tìm đến hằng số firebaseConfig và thay thế bằng config của bạn:
+Mở file index.html, tìm đến hằng số firebaseConfig và thay thế bằng config của bạn:
 ```javascript
    const firebaseConfig = {
        apiKey: "YOUR_API_KEY",
@@ -38,15 +37,13 @@ Truy cập Firebase Console và tạo một Project mới.
        appId: "YOUR_APP_ID"
    };
 ```
-4.  **Realtime Database:** Khởi tạo DB và cấu hình *Rules* để cấp quyền đọc/ghi.
-5.  **Storage:** Tạo bucket để lưu minh chứng và mở quyền Write. Đừng quên bật CORS cho bucket để tránh lỗi tải file.
-
+Realtime Database: Khởi tạo DB và cấu hình Rules để cấp quyền đọc/ghi.
+Storage: Tạo bucket để lưu minh chứng và mở quyền Write. Đừng quên bật CORS cho bucket để tránh lỗi tải file.
 2. Cấu hình Google Apps Script (Tiện ích mở rộng)
 Tạo một file Google Sheets và mở Extensions > Apps Script.
 Viết logic của bạn và triển khai dưới dạng Web App (Quyền truy cập: Anyone).
 Copy link Web App mới sinh ra.
 Mở file index.html, tìm đến khối <div id="tab-external-tool"> và dán link vào thuộc tính src của thẻ <iframe>.
-
 3. Lưu ý khi dùng file Excel (SheetJS)
 Import Danh sách: Hệ thống quét từ khóa STT làm Header. Đảm bảo file Excel luôn có cột STT và giữ đúng thứ tự các cột: Tên Thánh, Họ tên, Giới tính, Ngày sinh, v.v.
 Hãy dùng tính năng "Tải file mẫu" có sẵn trong hệ thống (Tab Quản trị nhân sự) để phổ biến cho người dùng.
