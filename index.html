@@ -1058,9 +1058,11 @@
             const adminSelect = document.getElementById('adminTopClassSelect'); const regSelect = document.getElementById('regChiDoan');
             CHI_DOAN_LIST.forEach(cd => { if(adminSelect) adminSelect.innerHTML += `<option value="${cd}">${cd}</option>`; if(regSelect && cd !== "Hệ Thống Admin") regSelect.innerHTML += `<option value="${cd}">${cd}</option>`; });
             
+            // THÊM DÒNG NÀY VÀO ĐỂ TẠO NÚT THÊM LỚP MỚI
+            if(adminSelect) adminSelect.innerHTML += `<option value="add_new_class" style="font-weight: bold; color: #059669;">+ Thêm lớp mới...</option>`;
+            
             try { systemYears = JSON.parse(localStorage.getItem(SYSTEM_YEARS_KEY)) || ["2025-2026", "2026-2027"]; } catch(e) { systemYears = ["2025-2026", "2026-2027"]; }
-            activeYear = localStorage.getItem('LMS_ACTIVE_YEAR_V44') || systemYears[systemYears.length - 1];
-            renderYearDropdowns();
+            // ... (Phần code bên dưới giữ nguyên) ...
             
             setTimeout(async () => {
                 let sYears = await fetchFromDB('system/years', systemYears); systemYears = toArray(sYears);
@@ -1089,8 +1091,10 @@
         function renderYearDropdowns() {
             const globalSelect = document.getElementById('globalYearSelect'); globalSelect.innerHTML = '';
             systemYears.forEach(y => { globalSelect.innerHTML += `<option value="${y}" ${y === activeYear ? 'selected' : ''}>${y}</option>`; });
+            
+            // Thêm tùy chọn tạo năm học mới ở cuối cùng
+            globalSelect.innerHTML += `<option value="add_new_year" style="font-weight: bold; color: #059669;">+ Thêm năm học mới...</option>`;
         }
-
         function showToast(msg, type = 'success') {
             const container = document.getElementById('toast-container'); const toast = document.createElement('div');
             toast.className = `toast ${type}`; toast.innerHTML = `<i class="fa-solid fa-circle-info toast-icon"></i><span class="toast-msg">${msg}</span>`;
@@ -1277,7 +1281,48 @@
             }
         }
 
-        async function changeAcademicYear(newYear) {
+       async function changeAcademicYear(newYear) {
+            // --- LOGIC TẠO NĂM HỌC MỚI ---
+            if (newYear === 'add_new_year') {
+                if (currentUser.role !== 'admin') {
+                    showToast("Chỉ Super Admin mới được tạo năm học!", "error");
+                    document.getElementById('globalYearSelect').value = activeYear; // Trả lại năm hiện tại
+                    return;
+                }
+                
+                let yName = prompt("Bạn muốn tạo ra năm học mới này là năm học gì?\n(Ví dụ: 2026-2027)");
+                
+                if (!yName || yName.trim() === '') {
+                    document.getElementById('globalYearSelect').value = activeYear; // Hủy bỏ
+                    return;
+                }
+                
+                yName = yName.trim();
+                if (systemYears.includes(yName)) {
+                    showToast("Năm học này đã tồn tại!", "error");
+                    document.getElementById('globalYearSelect').value = activeYear;
+                    return;
+                }
+                
+                // Lưu năm học mới
+                systemYears.push(yName); 
+                saveToDB('system/years', systemYears); 
+                activeYear = yName; 
+                localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear); 
+                
+                renderYearDropdowns(); // Render lại menu
+                
+                if(isCloudConnected && db) db.ref(`classes`).off(); 
+                await loadYearData(); 
+                if(isCloudConnected) setupRealtimeListeners(); 
+                switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); 
+                
+                // Hiện thông báo chào mừng
+                showToast(`🎉 Chào mừng bạn đến với năm học ${yName}!`, "success");
+                return;
+            }
+
+            // --- LOGIC CHUYỂN NĂM HỌC CŨ ---
             if(currentUser.role !== 'admin') {
                 let yUsers = await fetchFromDB("users/" + newYear, []); yUsers = toArray(yUsers);
                 let exists = yUsers.find(u => normalizeStr(u.username) === normalizeStr(currentUser.username));
@@ -1291,6 +1336,47 @@
         }
 
         async function switchClass(newClass) { 
+            // --- LOGIC TẠO LỚP MỚI ---
+            if (newClass === 'add_new_class') {
+                let cName = prompt("Bạn muốn đặt tên lớp mới là gì?\n(Ví dụ: Hiệp Sĩ 1)");
+                
+                if (!cName || cName.trim() === '') {
+                    document.getElementById('adminTopClassSelect').value = currentViewClass; // Hủy bỏ
+                    return;
+                }
+                
+                cName = cName.trim();
+                if (CHI_DOAN_LIST.includes(cName)) {
+                    showToast("Lớp này đã tồn tại trong danh sách!", "error");
+                    document.getElementById('adminTopClassSelect').value = currentViewClass;
+                    return;
+                }
+
+                // Cập nhật danh sách lớp và set làm lớp hiện tại
+                CHI_DOAN_LIST.push(cName);
+                currentViewClass = cName;
+                
+                // Render lại Menu Lớp Học để hiển thị lớp mới
+                const adminSelect = document.getElementById('adminTopClassSelect');
+                adminSelect.innerHTML = '';
+                CHI_DOAN_LIST.forEach(cd => {
+                    adminSelect.innerHTML += `<option value="${cd}" ${cd === currentViewClass ? 'selected' : ''}>${cd}</option>`;
+                });
+                adminSelect.innerHTML += `<option value="add_new_class" style="font-weight: bold; color: #059669;">+ Thêm lớp mới...</option>`;
+                
+                document.getElementById('topbarChiDoanTxt').innerText = currentViewClass;
+
+                // Load dữ liệu trống cho lớp mới và hiện thông báo
+                if(isCloudConnected && db) db.ref(`classes/${activeYear}`).off(); 
+                await loadClassData(); 
+                if(isCloudConnected) setupRealtimeListeners();
+                switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); 
+                
+                showToast(`🎉 Chào mừng bạn đến với lớp học ${cName}!`, "success");
+                return;
+            }
+
+            // --- LOGIC CHUYỂN LỚP CŨ ---
             currentViewClass = newClass; 
             if(isCloudConnected && db) db.ref(`classes/${activeYear}`).off(); 
             await loadClassData(); if(isCloudConnected) setupRealtimeListeners();
