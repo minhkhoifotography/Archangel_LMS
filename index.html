@@ -3648,9 +3648,13 @@
         window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
+            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
+        window.lastMaxTaskId = window.lastMaxTaskId || 0;
+
+        function listenToTasks() {
             if(!isCloudConnected || !db) return;
             
-            // Ngắt kết nối luồng Firebase cũ trước khi nạp luồng mới (Rất quan trọng)
+            // Ngắt kết nối luồng Firebase cũ trước khi nạp luồng mới (Chống lặp dữ liệu)
             db.ref(`tasks/${activeYear}/global_tasks`).off();
             
             db.ref(`tasks/${activeYear}/global_tasks`).on('value', (snapshot) => {
@@ -3661,6 +3665,7 @@
                 if(snapshot.exists()) {
                     let data = snapshot.val();
                     
+                    // Nhận diện thông minh: Lấy thông tin Ngành dựa trên Lớp và Nhiệm vụ
                     let myNganhFromClass = (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
                     let myNganhFromDuty = (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) ? "Ngành " + currentUser.nhiemVu.split("ngành ")[1] : "";
 
@@ -3669,6 +3674,7 @@
                         
                         if (t.id > currentMax) currentMax = t.id;
                         
+                        // 1. Kiểm tra xem User có nằm trong phạm vi nhận việc không
                         let inScope = false;
                         if (t.scopes.includes('ALL') || 
                             (currentUser.chidoan && t.scopes.includes(currentUser.chidoan)) || 
@@ -3678,15 +3684,21 @@
                             inScope = true;
                         }
 
-                        if (!isFirstLoad && t.id > window.lastMaxTaskId && inScope) {
+                        // Kiểm tra xem User này có phải là tác giả của thông báo không
+                        let isCreator = (t.creator === currentUser.username);
+
+                        // 2. --- ĐIỀU KIỆN RUNG CHUÔNG THẬT ---
+                        // Phải là task mới + Mình có trong danh sách nhận + VÀ TUYỆT ĐỐI KHÔNG phải do mình tạo ra!
+                        if (!isFirstLoad && t.id > window.lastMaxTaskId && inScope && !isCreator) {
                             createNotification(t);
                         }
 
-                        if (inScope) {
-                            t.isMyDuty = true; 
+                        // 3. --- ĐIỀU KIỆN HIỂN THỊ LÊN BẢNG ---
+                        if (isCreator) {
+                            t.isMyDuty = false;  // Việc mình tạo ra để theo dõi (Sẽ bị làm mờ và có chữ BẠN GIAO)
                             globalTasks.push(t);
-                        } else if (t.creator === currentUser.username) {
-                            t.isMyDuty = false; 
+                        } else if (inScope) {
+                            t.isMyDuty = true;   // Việc người khác giao, mình bắt buộc phải làm
                             globalTasks.push(t);
                         }
                     }
@@ -3695,6 +3707,7 @@
                 window.lastMaxTaskId = currentMax || Date.now();
                 
                 globalTasks.sort((a, b) => b.id - a.id);
+                
                 if(document.getElementById('tab-tasks').classList.contains('active')) renderTaskBoard();
                 if(document.getElementById('tab-reminders').classList.contains('active')) renderReminderBoard();
             });
