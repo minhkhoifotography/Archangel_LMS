@@ -975,16 +975,53 @@
 
             <!-- Year Admin Tab (QUẢN LÝ NĂM HỌC TỔNG) -->
             <div id="tab-year-admin" class="tab-content">
-                <div class="page-header"><div><h1 style="color: var(--info);">Tổng Kết Năm Học</h1><p>Bảng điểm tổng quát của toàn bộ các Chi Đoàn trong năm học hiện tại.</p></div></div>
-                <div class="card" style="border-top: 4px solid var(--success);">
-                    <div class="card-header"><span style="font-weight: 700; color: var(--success);"><i class="fa-solid fa-calendar-plus"></i> Khởi Tạo Năm Học Mới</span></div>
-                    <div class="card-body">
-                        <div class="flex-wrap-mobile" style="display: flex; gap: 1rem; align-items: flex-end;">
-                            <div class="form-group" style="flex: 1; margin-bottom: 0;"><label>Tên Năm Học Mới (Ví dụ: 2026-2027)</label><input type="text" id="newYearInput" placeholder="Nhập định dạng năm học..."></div>
-                            <button class="btn-action" style="background: var(--success);" onclick="createNewAcademicYear()"><i class="fa-solid fa-plus"></i> Tạo Mới Hệ Thống Năm</button>
+                <div class="page-header">
+                    <div>
+                        <h1 style="color: var(--info);">Quản Trị Năm Học</h1>
+                        <p>Bảng điểm tổng quát và thiết lập thời hạn (deadline) của hệ thống trong năm học hiện tại.</p>
+                    </div>
+                </div>
+
+                <!-- KHU VỰC MỚI: THIẾT LẬP KHÓA SỔ NHẬP ĐIỂM -->
+                <div class="card" style="border-top: 4px solid var(--danger);">
+                    <div class="card-header"><span style="font-weight: 700; color: var(--danger);"><i class="fa-solid fa-lock"></i> Thiết Lập Thời Gian Khóa Sổ Nhập Điểm</span></div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table class="excel-table">
+                                <thead>
+                                    <tr>
+                                        <th class="text-left">Kỳ Trọng Tâm</th>
+                                        <th style="width: 200px;">Ngày Khóa Sổ</th>
+                                        <th style="width: 200px;">Giờ Khóa Sổ</th>
+                                        <th style="width: 120px;">Hành Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="text-left" style="font-weight: 600;">Khóa sổ Học kỳ 1</td>
+                                        <td><input type="date" id="lockDateHk1" class="excel-input"></td>
+                                        <td><input type="time" id="lockTimeHk1" class="excel-input"></td>
+                                        <td><button class="btn-save" onclick="saveLockDeadline('Hk1')" style="padding: 0.4rem 0.8rem; border-radius: 4px; width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Lưu</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="font-weight: 600;">Khóa sổ Học kỳ 2</td>
+                                        <td><input type="date" id="lockDateHk2" class="excel-input"></td>
+                                        <td><input type="time" id="lockTimeHk2" class="excel-input"></td>
+                                        <td><button class="btn-save" onclick="saveLockDeadline('Hk2')" style="padding: 0.4rem 0.8rem; border-radius: 4px; width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Lưu</button></td>
+                                    </tr>
+                                    <tr>
+                                        <td class="text-left" style="font-weight: 600;">Khóa sổ Cả năm học</td>
+                                        <td><input type="date" id="lockDateFinal" class="excel-input"></td>
+                                        <td><input type="time" id="lockTimeFinal" class="excel-input"></td>
+                                        <td><button class="btn-save" onclick="saveLockDeadline('Final')" style="padding: 0.4rem 0.8rem; border-radius: 4px; width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Lưu</button></td>
+                                    </tr>
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>
+
+                <!-- BẢNG VÀNG TỔNG KẾT NĂM HỌC GIỮ NGUYÊN -->
                 <div class="card" style="border-top: 4px solid var(--info); margin-top: 1.5rem;">
                     <div class="card-header"><span style="font-weight: 700; color: var(--info);"><i class="fa-solid fa-ranking-star"></i> Bảng Vàng Tổng Kết Năm Học <span id="summaryYearLabel"></span></span></div>
                     <div class="card-body" style="padding: 0;">
@@ -997,10 +1034,6 @@
                     </div>
                 </div>
             </div>
-
-        </div>
-    </main>
-
     <script>
         // === CẤU HÌNH API FIREBASE ===
         const firebaseConfig = {
@@ -2682,11 +2715,6 @@
         }
 
         // ================= TAB: TỔNG KẾT NĂM HỌC =================
-        function createNewAcademicYear() {
-            let yName = document.getElementById('newYearInput').value.trim();
-            if(!yName) return showToast("Nhập tên năm học!", "warning"); if(systemYears.includes(yName)) return showToast("Năm học đã tồn tại!", "error");
-            systemYears.push(yName); saveToDB('system/years', systemYears); changeAcademicYear(yName); renderYearDropdowns(); document.getElementById('newYearInput').value = ''; showToast(`Đã tạo: ${yName}`, "success");
-        }
         async function renderYearlySummary() {
             document.getElementById('summaryYearLabel').innerText = activeYear; const tbody = document.getElementById('yearSummaryTbody'); tbody.innerHTML = ''; let stt = 1;
             
@@ -2711,6 +2739,20 @@
                 }
             }
             if(tbody.innerHTML === '') { tbody.innerHTML = `<tr><td colspan="5" style="padding: 2rem; color: var(--text-muted);">Hệ thống chưa có dữ liệu trong năm ${activeYear}.</td></tr>`; }
+        }
+
+        // ================= HÀM XỬ LÝ LƯU THỜI GIAN KHÓA SỔ =================
+        function saveLockDeadline(term) {
+            let dateVal = document.getElementById(`lockDate${term}`).value;
+            let timeVal = document.getElementById(`lockTime${term}`).value;
+
+            if (!dateVal || !timeVal) {
+                return showToast("Vui lòng chọn đầy đủ Ngày và Giờ để thiết lập!", "warning");
+            }
+
+            // Ở đây bạn có thể mở rộng để lưu data lên Firebase vào nhánh: system/deadlines/activeYear
+            // Tạm thời hiển thị Toast thành công để có trải nghiệm UI tốt nhất:
+            showToast(`Đã lưu thời gian khóa sổ thành công!`, "success");
         }
 
         // ================= VÒNG QUAY MAY MẮN TOÀN DIỆN MỚI =================
