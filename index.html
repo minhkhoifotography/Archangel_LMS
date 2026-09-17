@@ -1753,12 +1753,33 @@
             db.ref(`users/${activeYear}`).on('value', (snapshot) => {
                 if(snapshot.exists()) { 
                     globalUsers = toArray(snapshot.val()); 
+                    
+                    // --- ĐỒNG BỘ CURRENT USER VỚI ĐÁM MÂY (CHỐNG LỖI BÓNG MA) ---
+                    if (currentUser && currentUser.username !== 'admin') {
+                        let updatedMe = globalUsers.find(u => u.username === currentUser.username);
+                        if (updatedMe) {
+                            // Phát hiện xem Admin có vừa đổi chức vụ của mình không
+                            let roleChanged = (currentUser.chidoan !== updatedMe.chidoan) || (currentUser.nhiemVu !== updatedMe.nhiemVu) || (currentUser.banTruc !== updatedMe.banTruc);
+                            
+                            // Ghi đè dữ liệu mới nhất vào phiên đăng nhập hiện tại
+                            currentUser.chidoan = updatedMe.chidoan || "Chưa phân công";
+                            currentUser.nhiemVu = updatedMe.nhiemVu || "Chưa phân công";
+                            currentUser.banTruc = updatedMe.banTruc || "Chưa phân công";
+                            currentUser.role = updatedMe.role || "collab";
+                            
+                            // Nếu bị đổi quyền, ép hệ thống tải lại toàn bộ hộp thư công việc ngay lập tức!
+                            if (roleChanged && typeof listenToTasks === 'function') {
+                                listenToTasks();
+                            }
+                        }
+                    }
+                    // -------------------------------------------------------------
+
                     if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
                     if(document.getElementById('tab-glv-profile').classList.contains('active')) renderGLVProfiles();
                 }
             });
         }
-
         function renderCurrentTab() {
             if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
             if(document.getElementById('tab-attendance').classList.contains('active')) renderAttendance();
@@ -3654,7 +3675,15 @@
         window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
+            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
+        window.lastMaxTaskId = window.lastMaxTaskId || 0;
+
+        function listenToTasks() {
             if(!isCloudConnected || !db) return;
+            
+            // Ngắt kết nối luồng Firebase cũ trước khi nạp luồng mới (Rất quan trọng)
+            db.ref(`tasks/${activeYear}/global_tasks`).off();
+            
             db.ref(`tasks/${activeYear}/global_tasks`).on('value', (snapshot) => {
                 globalTasks = [];
                 let isFirstLoad = (window.lastMaxTaskId === 0);
