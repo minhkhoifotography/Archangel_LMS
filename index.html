@@ -1157,11 +1157,8 @@
                     </button>
                 </div>
                 
-                <!-- ĐÃ BỔ SUNG LẠI THẺ DIV BỊ THIẾU -->
                 <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
                     <table class="excel-table">
-                    <!-- (Giữ nguyên phần table-responsive bên dưới) -->
-                        <table class="excel-table">
                             <thead>
                                 <tr>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">STT</th>
@@ -1355,7 +1352,7 @@
 
         const ICONS = ["🍉","🌻","🐬","🍀","🦊","🐼","🍓","🌼"];
 
-        let systemYears = []; let activeYear = "";
+        let systemYears = []; let activeYear = localStorage.getItem('LMS_ACTIVE_YEAR_V44') || "";
         let authDB = {}; let globalUsers = []; let roleRequests = []; let state = { teams: [], settings: {}, rawList: [] };
         let currentUser = null; let currentViewClass = null; let currentSheet = 'hk1'; let chartInstance = null, studentChartInstance = null;
 
@@ -1620,9 +1617,11 @@
                 let globalDefaultYear = await fetchFromDB('system/defaultYear', null);
                 if (globalDefaultYear && systemYears.includes(globalDefaultYear)) {
                     activeYear = globalDefaultYear;
-                    localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
-                    renderYearDropdowns();
+                } else if (!activeYear || !systemYears.includes(activeYear)) {
+                    activeYear = systemYears[systemYears.length - 1]; // Mặc định lấy năm học mới nhất
                 }
+                localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
+                renderYearDropdowns();
                 // ----------------------------------------------------
 
                 const userIn = document.getElementById('loginUsername').value.trim(); const passIn = document.getElementById('loginPassword').value.trim();
@@ -3645,10 +3644,6 @@
         }
 
         // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
-        window.lastMaxTaskId = window.lastMaxTaskId || 0;
-
-        function listenToTasks() {
-            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
         window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
