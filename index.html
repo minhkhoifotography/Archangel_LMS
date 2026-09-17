@@ -826,20 +826,25 @@
                     </div>
                 </div>
                 <div class="card" style="border-top: 4px solid var(--primary); margin-top: 1.5rem;">
-                    <div class="card-header"><span style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-server"></i> Nạp Dữ Liệu Phân Công (Excel) Vào Năm Học Này</span></div>
+                    <div class="card-header">
+                        <span style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-server"></i> Nạp Dữ Liệu Phân Công (Excel) Vào Năm Học Này</span>
+                        <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="downloadAdminTemplate()">
+                            <i class="fa-solid fa-file-arrow-down"></i> Tải File Mẫu
+                        </button>
+                    </div>
                     <div class="card-body">
                         <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
-                            <strong>Định dạng file yêu cầu:</strong> Hàng đầu tiên làm tiêu đề. Cột 1: <code>Họ Tên</code>, Cột 2: <code>Mật Khẩu</code> (bỏ trống tự nhận '1'), Cột 3: <code>Chi Đoàn</code>, Cột 4: <code>Quyền Hạn</code> (lead, assistant, collab).
+                            <strong>Định dạng file yêu cầu (3 cột):</strong> Hàng đầu tiên làm tiêu đề. Cột 1: <code>Họ và Tên</code>, Cột 2: <code>Chi Đoàn</code>, Cột 3: <code>Quyền Hạn</code> (lead, assistant, collab). 
+                            <br><i style="font-size: 0.85rem; color: var(--success); margin-top: 5px; display: inline-block;">* Hệ thống sẽ tự động cấp mật khẩu mặc định là '1' cho các tài khoản mới.</i>
                         </div>
                         <div class="file-upload-wrapper">
-                            <input type="file" id="adminUpload" accept=".xlsx, .csv" onchange="handleAdminMassAssignment(event)">
+                            <input type="file" id="adminUpload" accept=".xlsx, .xls, .csv" onchange="handleAdminMassAssignment(event)">
                             <div class="file-upload-btn" style="background: white; border-color: var(--primary); color: var(--primary);">
                                 <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 10px;"></i><br>Tải File Phân Công Lên Máy Chủ
                             </div>
                         </div>
                     </div>
                 </div>
-            </div>
 
             <!-- External Integration Tab -->
             <div id="tab-external-tool" class="tab-content">
@@ -2604,24 +2609,87 @@
             const file = e.target.files[0]; if (!file) return; const reader = new FileReader();
             reader.onload = function(e) {
                 try {
-                    const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'}); const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1}); let count = 0;
+                    const workbook = XLSX.read(new Uint8Array(e.target.result), {type: 'array'}); 
+                    const jsonData = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], {header: 1}); 
+                    let count = 0;
+                    
                     for (let i = 1; i < jsonData.length; i++) {
                         let row = jsonData[i];
-                        if (row[0] && row[2]) {
-                            let name = row[0].toString().trim(); let pass = row[1] ? row[1].toString().trim() : "1"; let cd = row[2].toString().trim(); let role = row[3] ? row[3].toString().trim().toLowerCase() : "collab";
-                            if (name.toLowerCase() === 'admin') continue;
-                            authDB[name] = pass; let existing = globalUsers.find(u => u.username === name && u.chidoan === cd);
-                            if(existing) { existing.role = role; } else { globalUsers.push({ username: name, chidoan: cd, role: role }); } count++;
+                        // Cấu trúc mới: Cột 0: Tên, Cột 1: Chi đoàn, Cột 2: Quyền hạn
+                        if (row[0] && row[1]) {
+                            let name = row[0].toString().trim(); 
+                            let cd = row[1].toString().trim(); 
+                            let role = row[2] ? row[2].toString().trim().toLowerCase() : "collab";
+                            let pass = "1"; // Tự động gán mật khẩu mặc định
                             
+                            if (name.toLowerCase() === 'admin') continue;
+                            
+                            let normName = normalizeStr(name);
+                            
+                            // 1. Khởi tạo Auth nếu là tài khoản mới
+                            let matchedKey = Object.keys(authDB).find(k => normalizeStr(k) === normName);
+                            if (!matchedKey) { authDB[name] = pass; }
+                            
+                            // 2. Cập nhật hoặc Thêm mới vào danh sách Users
+                            let existing = globalUsers.find(u => normalizeStr(u.username) === normName);
+                            if(existing) { 
+                                existing.chidoan = cd; 
+                                existing.role = role; 
+                            } else { 
+                                globalUsers.push({ 
+                                    username: name, 
+                                    chidoan: cd, 
+                                    role: role, 
+                                    nhiemVu: "Chưa phân công", 
+                                    banTruc: "Chưa phân công", 
+                                    profile: { tenThanh: '', hoTen: name, ngaySinh: '', sdt: '', email: '', bangCap: '' } 
+                                }); 
+                            } 
+                            count++;
+                            
+                            // Tạo CSDL rỗng nếu lớp này chưa từng tồn tại
                             if (!localStorage.getItem(CLASS_PREFIX + activeYear + "_" + cd)) { 
                                 let emptyClass = { settings: { hk1Locked: false, hk2Locked: false, finalLocked: false }, teams: [] }; 
                                 localStorage.setItem(CLASS_PREFIX + activeYear + "_" + cd, JSON.stringify(emptyClass)); 
                             }
                         }
                     }
-                    saveToDB('auth', authDB); saveToDB("users/" + activeYear, globalUsers); showToast(`Đã nạp ${count} user vào Năm học ${activeYear}!`, "success");
-                } catch(error) { showToast("Lỗi định dạng file", "error"); }
-            }; reader.readAsArrayBuffer(file);
+                    
+                    saveToDB('auth', authDB); 
+                    saveToDB("users/" + activeYear, globalUsers); 
+                    showToast(`Đã nạp thành công ${count} tài khoản vào Năm học ${activeYear}!`, "success");
+                    
+                    // Tự động làm mới bảng trên màn hình
+                    if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
+                    if(document.getElementById('tab-glv-profile').classList.contains('active')) renderGLVProfiles();
+                    
+                } catch(error) { 
+                    console.error(error);
+                    showToast("Lỗi định dạng file Excel!", "error"); 
+                }
+            }; 
+            reader.readAsArrayBuffer(file);
+            e.target.value = ''; // Reset input để có thể tải file lên lại
+        }
+
+        // HÀM MỚI: Tự động tạo và tải xuống File Excel Mẫu
+        function downloadAdminTemplate() {
+            const ws_data = [
+                ["Họ và Tên", "Chi Đoàn", "Quyền Hạn"],
+                ["Maria Phan Trần Thanh Thảo", "Thiếu 3C", "lead"],
+                ["Micae Lưu Minh Khôi", "Thiếu 3C", "assistant"],
+                ["Maria Phạm Trần Kim Anh", "Thiếu 3C", "collab"]
+            ];
+            const ws = XLSX.utils.aoa_to_sheet(ws_data);
+            
+            // Kéo rộng cột cho đẹp
+            const wscols = [{wch: 35}, {wch: 20}, {wch: 15}];
+            ws['!cols'] = wscols;
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "PhanCongGLV");
+            XLSX.writeFile(wb, "File_Mau_Phan_Cong_GLV.xlsx");
+            showToast("Đã tải File mẫu thành công!", "success");
         }
 
         // ================= TAB: TỔNG KẾT NĂM HỌC =================
