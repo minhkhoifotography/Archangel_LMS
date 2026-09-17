@@ -745,9 +745,14 @@
             <!-- REMINDER BOARD TAB -->
             <div id="tab-reminders" class="tab-content">
                 <div class="page-header">
-                    <div><h1 style="color: var(--warning);">Bảng Nhắc Việc (Reminders)</h1><p>Các công việc, thông báo chỉ mang tính nhắc nhở đang có hiệu lực đối với bạn.</p></div>
+                    <div>
+                        <h1 style="color: var(--warning);">Bảng Nhắc Việc (Reminders)</h1>
+                        <p>Các công việc, thông báo chỉ mang tính nhắc nhở đang có hiệu lực đối với bạn.</p>
+                    </div>
                 </div>
-                <div class="task-grid" id="reminderBoardGrid"></div>
+                <div class="task-grid" id="reminderBoardGrid">
+                    <!-- JS đổ dữ liệu vào đây -->
+                </div>
             </div>
 
             <!-- MODAL TẠO NHIỆM VỤ / NHẮC VIỆC CHUNG -->
@@ -824,42 +829,6 @@
                     </div>
                 </div>
             </div>
-                        <!-- Cột phải: Lịch sử (Timeline) -->
-                        <div>
-                            <h3 style="font-size: 1.1rem; margin-bottom: 10px;"><i class="fa-solid fa-clock-rotate-left"></i> Nhật Ký Hoạt Động</h3>
-                            <div class="timeline" id="tdTimeline">
-                                <!-- JS sẽ render các chấm timeline vào đây -->
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- MODAL TẠO CÔNG VIỆC MỚI -->
-            <div class="overlay-bg" id="createTaskModal" style="display: none; z-index: 10006;">
-                <div class="auth-box" style="max-width: 500px; width: 95%;">
-                    <h2>Tạo Nhiệm Vụ Mới</h2>
-                    <form onsubmit="event.preventDefault(); submitNewTask();">
-                        <div class="form-group">
-                            <label>Tên nhiệm vụ</label>
-                            <input type="text" id="ctTitle" required placeholder="VD: Nộp kịch bản sự kiện">
-                        </div>
-                        <div class="form-group">
-                            <label>Mô tả chi tiết</label>
-                            <textarea id="ctDesc" style="height: 80px;" placeholder="Yêu cầu cụ thể..."></textarea>
-                        </div>
-                        <div class="form-group">
-                            <label>Hạn chót (Deadline)</label>
-                            <input type="datetime-local" id="ctDeadline" required>
-                        </div>
-                        <div style="display: flex; gap: 10px; margin-top: 20px;">
-                            <button type="button" class="btn-outline" style="flex: 1;" onclick="document.getElementById('createTaskModal').style.display='none'">Hủy</button>
-                            <button type="submit" class="btn-primary" style="flex: 2;"><i class="fa-solid fa-plus"></i> Tạo Công Việc</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
             <!-- TAB MỚI: VÒNG QUAY MAY MẮN -->
             <div id="tab-wheel" class="tab-content">
                 <div class="page-header">
@@ -1083,8 +1052,13 @@
                 </div>
 
                 <div class="card" style="border-top: 4px solid #8b5cf6;">
-                    <div class="card-header"><span style="color: #8b5cf6; font-weight: 700;"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Huynh Trưởng - GLV</span></div>
-                    <div class="table-responsive" style="max-height: 45vh; overflow-y: auto;">
+                    <div class="card-header">
+                        <span style="color: #8b5cf6; font-weight: 700;"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Huynh Trưởng - GLV</span>
+                        <button class="btn-action" style="background: #8b5cf6; padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="exportGLVProfiles()">
+                            <i class="fa-solid fa-file-excel"></i> Tải Về Dữ Liệu
+                        </button>
+                    </div>
+                    <!-- (Giữ nguyên phần table-responsive bên dưới) -->
                         <table class="excel-table">
                             <thead>
                                 <tr>
@@ -3611,33 +3585,20 @@
 
         // 3. Logic Nộp và Phê Duyệt File Toàn Cục
         function openTaskDetail(taskId) {
-            let task = globalTasks.find(t => t.id === taskId); if(!task) return;
-            currentOpenTaskId = taskId;
-            document.getElementById('tdTitle').innerText = task.title; document.getElementById('tdDesc').innerText = task.desc; document.getElementById('tdDeadline').innerText = new Date(task.deadline).toLocaleString('vi-VN');
+            // Xử lý Timeline (Nhật ký)
+            let tlHtml = ''; 
+            let dotColor = { 'created': '#94a3b8', 'submitted': '#3b82f6', 'approved': '#22c55e', 'rejected': '#ef4444' };
             
-            let statusHtml = '';
-            if(task.status === 'todo') statusHtml = `<span class="status-badge status-todo">Chờ nộp</span>`;
-            if(task.status === 'pending') statusHtml = `<span class="status-badge status-pending">Đang chờ duyệt</span>`;
-            if(task.status === 'approved') statusHtml = `<span class="status-badge status-approved">Hoàn thành</span>`;
-            if(task.status === 'rejected') statusHtml = `<span class="status-badge status-rejected">Cần sửa lại</span>`;
-            document.getElementById('tdStatus').innerHTML = statusHtml;
-
-            let tlHtml = ''; let dotColor = { 'created': '#94a3b8', 'submitted': '#3b82f6', 'approved': '#22c55e', 'rejected': '#ef4444' };
-            task.history.forEach(h => {
-                let contentClass = h.action === 'rejected' ? 'rejected' : (h.action === 'approved' ? 'approved' : '');
-                let linkHtml = h.link ? `<br><a href="${h.link}" target="_blank" style="color:var(--primary); font-weight:bold;"><i class="fa-solid fa-paperclip"></i> Mở file đính kèm</a>` : '';
-                tlHtml += `<div class="timeline-item"><div class="timeline-dot" style="border-color: ${dotColor[h.action] || '#3b82f6'};"></div><div class="timeline-time">${h.time} - Bởi <b>${h.actor}</b></div><div class="timeline-content ${contentClass}">${esc(h.detail)}${linkHtml}</div></div>`;
-            });
+            if (!task.history || task.history.length === 0) {
+                tlHtml = '<div style="text-align: center; color: var(--text-muted); padding: 1.5rem; font-style: italic; background: #f8fafc; border-radius: 8px;">Chưa có lịch sử hoạt động nào.</div>';
+            } else {
+                task.history.forEach(h => {
+                    let contentClass = h.action === 'rejected' ? 'rejected' : (h.action === 'approved' ? 'approved' : '');
+                    let linkHtml = h.link ? `<br><a href="${h.link}" target="_blank" style="color:var(--primary); font-weight:bold;"><i class="fa-solid fa-paperclip"></i> Mở file đính kèm</a>` : '';
+                    tlHtml += `<div class="timeline-item"><div class="timeline-dot" style="border-color: ${dotColor[h.action] || '#3b82f6'};"></div><div class="timeline-time">${h.time} - Bởi <b>${h.actor}</b></div><div class="timeline-content ${contentClass}">${esc(h.detail)}${linkHtml}</div></div>`;
+                });
+            }
             document.getElementById('tdTimeline').innerHTML = tlHtml;
-
-            let canSubmit = (task.status === 'todo' || task.status === 'rejected') && (currentUser.role !== 'admin');
-            let canApprove = (task.status === 'pending') && (currentUser.role === 'admin' || currentUser.role === 'lead');
-            document.getElementById('submissionZone').style.display = canSubmit ? 'block' : 'none';
-            document.getElementById('approvalZone').style.display = canApprove ? 'block' : 'none';
-
-            document.getElementById('taskLinkInput').value = ''; document.getElementById('taskFileInput').value = ''; document.getElementById('taskFeedback').value = '';
-            document.getElementById('taskDetailModal').style.display = 'flex';
-        }
 
         async function submitTaskProof() {
             let link = document.getElementById('taskLinkInput').value.trim();
@@ -3711,6 +3672,39 @@
             originalSwitchTab(tabId, el);
             if(tabId === 'tasks' || tabId === 'reminders') { listenToTasks(); }
         };
+            // ================= XUẤT EXCEL DANH SÁCH GIÁO LÝ VIÊN =================
+        function exportGLVProfiles() {
+            let exportData = [];
+            let stt = 1;
+            
+            globalUsers.forEach(u => {
+                if (u.username.toLowerCase() === 'admin') return;
+                let p = u.profile || {};
+                exportData.push({
+                    "STT": stt++,
+                    "Tên Thánh": p.tenThanh || '',
+                    "Tên Đăng Nhập": u.username || '',
+                    "Họ và Tên": p.hoTen || u.username,
+                    "Ngày Sinh": p.ngaySinh || '',
+                    "Số Điện Thoại": p.sdt || '',
+                    "Email": p.email || '',
+                    "Bằng Cấp / Cấp Hiệu": p.bangCap || ''
+                });
+            });
+
+            if(exportData.length === 0) return showToast("Không có dữ liệu Giáo Lý Viên để xuất!", "warning");
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            
+            // Căn chỉnh độ rộng cột Excel
+            const wscols = [ {wch: 5}, {wch: 15}, {wch: 20}, {wch: 25}, {wch: 15}, {wch: 15}, {wch: 30}, {wch: 20} ];
+            worksheet['!cols'] = wscols;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "HoSo_GLV");
+            XLSX.writeFile(workbook, `DanhSach_GLV_${activeYear}.xlsx`);
+            showToast("Đã tải xuống file Excel danh sách GLV!", "success");
+        }
     </script>
 </body>
 </html>
