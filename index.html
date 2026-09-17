@@ -879,7 +879,18 @@
                                     <td><input type="text" id="newGLVDOB" class="excel-input new-row-input" placeholder="DD-MM-YYYY"></td>
                                     <td><input type="text" id="newGLVSdt" class="excel-input new-row-input"></td>
                                     <td><input type="text" id="newGLVEmail" class="excel-input new-row-input"></td>
-                                    <td><input type="text" id="newGLVBangCap" class="excel-input new-row-input"></td>
+                                    <!-- Đổi Input Bằng cấp thành Select -->
+                                    <td>
+                                        <select id="newGLVBangCap" class="excel-input new-row-input">
+                                            <option value="">-- Chọn Bằng Cấp --</option>
+                                            <option value="Dự Trưởng">Dự Trưởng</option>
+                                            <option value="HT-GLV Cấp 1">HT-GLV Cấp 1</option>
+                                            <option value="HT-GLV Cấp 2">HT-GLV Cấp 2</option>
+                                            <option value="HT-GLV Cấp 3">HT-GLV Cấp 3</option>
+                                            <option value="Huấn Luyện Viên">Huấn Luyện Viên</option>
+                                            <option value="HT-GLPT">HT-GLPT</option>
+                                        </select>
+                                    </td>
                                     <td><button class="btn-save" onclick="addNewGLVRow()" style="padding: 0.4rem 0.8rem; border-radius: 4px; width: 100%;"><i class="fa-solid fa-floppy-disk"></i></button></td>
                                 </tr>
                             </tbody>
@@ -1032,6 +1043,11 @@
         const COMMITTEE_LIST = [
             "Chưa phân công", "Ban Phụng Vụ", "Ban Trực", "Ban Sinh Hoạt", 
             "Ban Học Vụ", "Ban Truyền Thông", "Ban Bác Ái", "Ban Kỹ Thuật"
+        ];
+        // THÊM DANH SÁCH BẰNG CẤP VÀO ĐÂY
+        const BANG_CAP_LIST = [
+            "Dự Trưởng", "HT-GLV Cấp 1", "HT-GLV Cấp 2", 
+            "HT-GLV Cấp 3", "Huấn Luyện Viên", "HT-GLPT"
         ];
 
         const DEFAULT_AUTH = { "admin": "1", "maria phan trần thanh thảo": "1", "micae lưu minh khôi": "1", "maria phạm trần kim anh": "1" };
@@ -2961,46 +2977,108 @@
             globalUsers.forEach(u => {
                 if (u.username.toLowerCase() === 'admin') return;
                 let p = u.profile || { tenThanh: '', hoTen: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
-                let displayHoTen = p.hoTen || u.username; // Nếu chưa có họ tên (data cũ), lấy tên đăng nhập hiển thị tạm
+                let displayHoTen = p.hoTen || u.username; // Hiển thị tạm tên đăng nhập nếu chưa có họ tên
                 
+                // Nạp Dropdown Bằng cấp
+                let bangCapOpts = `<option value="">Chưa cập nhật</option>` + BANG_CAP_LIST.map(b => `<option value="${b}" ${p.bangCap === b ? 'selected' : ''}>${b}</option>`).join('');
+
                 tbody.innerHTML += `<tr>
                     <td>${stt++}</td>
                     <td><input type="text" class="excel-input text-left" value="${esc(p.tenThanh)}" onblur="updateGLVProfile('${u.username}', 'tenThanh', this.value)"></td>
-                    <td class="text-left" style="font-weight: bold; color: var(--primary);">${u.username}</td>
+                    
+                    <!-- Ô TÊN ĐĂNG NHẬP: CHỈNH SỬA TRỰC TIẾP -->
+                    <td><input type="text" class="excel-input text-left" value="${esc(u.username)}" onblur="updateGLVUsername('${u.username}', this.value)" style="font-weight: bold; color: var(--primary);"></td>
+                    
                     <td><input type="text" class="excel-input text-left" value="${esc(displayHoTen)}" onblur="updateGLVProfile('${u.username}', 'hoTen', this.value)" style="font-weight: 600;"></td>
                     <td><input type="text" class="excel-input" value="${esc(p.ngaySinh)}" onblur="updateGLVProfile('${u.username}', 'ngaySinh', this.value)" placeholder="DD-MM-YYYY"></td>
                     <td><input type="text" class="excel-input" value="${esc(p.sdt)}" onblur="updateGLVProfile('${u.username}', 'sdt', this.value)"></td>
                     <td><input type="text" class="excel-input text-left" value="${esc(p.email)}" onblur="updateGLVProfile('${u.username}', 'email', this.value)"></td>
-                    <td><input type="text" class="excel-input text-left" value="${esc(p.bangCap)}" onblur="updateGLVProfile('${u.username}', 'bangCap', this.value)"></td>
+                    <td><select class="excel-input" onchange="updateGLVProfile('${u.username}', 'bangCap', this.value)">${bangCapOpts}</select></td>
                     <td><button class="btn-reject" style="padding: 0.35rem 0.65rem; border-radius: 4px; background:#ef4444;" onclick="deleteGLV('${u.username}')" title="Xóa tài khoản này"><i class="fa-solid fa-trash-can"></i></button></td>
                 </tr>`;
             });
-            renderPasswordList(); // Cập nhật luôn bảng mật khẩu bên dưới
+            renderPasswordList(); // Đồng bộ ngay với bảng Mật Khẩu
+        }
+
+        // HÀM MỚI: Xử lý đổi tên Đăng Nhập cho GLV
+        function updateGLVUsername(oldUsername, newUsernameRaw) {
+            let newUsername = newUsernameRaw.trim();
+            if(!newUsername || oldUsername === newUsername) return;
+            if(newUsername.toLowerCase() === 'admin') {
+                showToast("Không thể sử dụng tên admin!", "error");
+                renderGLVProfiles(); return;
+            }
+
+            let normNew = normalizeStr(newUsername);
+            let exists = globalUsers.find(u => normalizeStr(u.username) === normNew);
+            let authKeys = Object.keys(authDB).map(k => normalizeStr(k));
+
+            if (exists || authKeys.includes(normNew)) {
+                showToast("Tên đăng nhập đã tồn tại! Vui lòng chọn tên khác.", "error");
+                renderGLVProfiles(); return;
+            }
+
+            // 1. Cập nhật trong Danh sách Users
+            let user = globalUsers.find(u => u.username === oldUsername);
+            if (user) user.username = newUsername;
+
+            // 2. Cập nhật Yêu cầu quyền (nếu có)
+            roleRequests.forEach(r => { if (r.username === oldUsername) r.username = newUsername; });
+            
+            // 3. Đổi Key (Tên Đăng Nhập) trong Bảng Mật Khẩu
+            let matchKey = Object.keys(authDB).find(k => normalizeStr(k) === normalizeStr(oldUsername));
+            if (matchKey) {
+                authDB[newUsername] = authDB[matchKey];
+                delete authDB[matchKey];
+            } else {
+                authDB[newUsername] = "1";
+            }
+
+            // Lưu dữ liệu lên mây
+            saveToDB('auth', authDB);
+            saveToDB("users/" + activeYear, globalUsers);
+            saveToDB("requests/" + activeYear, roleRequests);
+
+            showToast("Đã đổi Tên đăng nhập thành công!", "success");
+            renderGLVProfiles();
+            if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
         }
 
         function renderPasswordList() {
             const tbody = document.getElementById('glvPasswordTbody'); if(!tbody) return; tbody.innerHTML = '';
             let stt = 1;
-            for (let username in authDB) {
-                if (username.toLowerCase() === 'admin') continue; // Ẩn mật khẩu admin tối cao
-                
+            
+            // Đọc trực tiếp từ globalUsers để đảm bảo 2 bảng ĐỒNG BỘ 100%
+            globalUsers.forEach(u => {
+                if (u.username.toLowerCase() === 'admin') return; 
+
+                // Tìm mật khẩu tương ứng trong authDB
+                let pass = "1";
+                let matchedKey = Object.keys(authDB).find(k => normalizeStr(k) === normalizeStr(u.username));
+                if (matchedKey) pass = authDB[matchedKey];
+
                 tbody.innerHTML += `<tr>
                     <td>${stt++}</td>
-                    <td class="text-left" style="font-weight: bold; color: var(--text-main); font-size: 1.05rem;">${username}</td>
+                    <td><input type="text" class="excel-input text-left" value="${esc(u.username)}" onblur="updateGLVUsername('${u.username}', this.value)" style="font-weight: bold; color: var(--text-main); font-size: 1.05rem;"></td>
                     <td>
-                        <input type="text" class="excel-input" value="${esc(authDB[username])}" onblur="adminUpdatePassword('${username}', this.value)" style="font-family: monospace; font-weight: 600; color: #e11d48; letter-spacing: 1px;" title="Sửa trực tiếp vào đây để đổi mật khẩu">
+                        <input type="text" class="excel-input" value="${esc(pass)}" onblur="adminUpdatePassword('${u.username}', this.value)" style="font-family: monospace; font-weight: 600; color: #e11d48; letter-spacing: 1px;" title="Sửa trực tiếp vào đây để đổi mật khẩu">
                     </td>
                 </tr>`;
-            }
+            });
         }
 
         function adminUpdatePassword(username, newPass) {
             let pass = newPass.trim();
             if (!pass) return showToast("Mật khẩu không được để trống!", "warning");
-            if (authDB[username] !== pass) {
-                authDB[username] = pass;
+            
+            let matchedKey = Object.keys(authDB).find(k => normalizeStr(k) === normalizeStr(username));
+            let finalKey = matchedKey || username;
+
+            if (authDB[finalKey] !== pass) {
+                authDB[finalKey] = pass;
                 saveToDB('auth', authDB);
                 showToast(`Đã thay đổi mật khẩu cho tài khoản: ${username}`, "success");
+                renderPasswordList();
             }
         }
 
@@ -3028,7 +3106,6 @@
             let existingUser = globalUsers.find(u => normalizeStr(u.username) === normName);
             
             if (existingUser) {
-                // Nếu Username đã tồn tại -> Chỉ cập nhật hồ sơ
                 if(!existingUser.profile) existingUser.profile = {};
                 if(tenThanh) existingUser.profile.tenThanh = tenThanh;
                 if(hoTen) existingUser.profile.hoTen = hoTen;
@@ -3038,7 +3115,6 @@
                 if(bangCap) existingUser.profile.bangCap = bangCap;
                 showToast("Đã cập nhật hồ sơ cho tài khoản: " + usernameInput, "success");
             } else {
-                // Nếu Username chưa tồn tại -> Tạo luôn tài khoản đăng nhập
                 let newUser = {
                     username: usernameInput,
                     chidoan: "Chưa phân công",
@@ -3048,7 +3124,6 @@
                     profile: { tenThanh: tenThanh, hoTen: hoTen, ngaySinh: ngaySinh, sdt: sdt, email: email, bangCap: bangCap }
                 };
                 globalUsers.push(newUser);
-                // Khởi tạo mật khẩu mặc định "1"
                 authDB[usernameInput] = "1"; 
                 saveToDB('auth', authDB);
                 showToast("Tạo mới tài khoản: " + usernameInput + " (Mật khẩu: 1)", "success");
@@ -3064,7 +3139,10 @@
         function deleteGLV(username) {
             if(!confirm(`CẢNH BÁO: Xác nhận xóa HOÀN TOÀN tài khoản và hồ sơ của: [${username}]?`)) return;
             globalUsers = globalUsers.filter(u => u.username !== username);
-            delete authDB[username];
+            
+            let matchedKey = Object.keys(authDB).find(k => normalizeStr(k) === normalizeStr(username));
+            if (matchedKey) delete authDB[matchedKey];
+            
             saveToDB('auth', authDB);
             saveToDB("users/" + activeYear, globalUsers);
             renderGLVProfiles();
