@@ -846,7 +846,8 @@
                 <div class="auth-box" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto;">
                     <h2>Phát Hành Mới</h2>
                     <form onsubmit="event.preventDefault(); submitNewTask();">
-                        <!-- Khu vực Chọn Loại Nhiệm Vụ -->
+                        
+                        <!-- Khu vực Chọn Loại Nhiệm Vụ (Đã được CSS Fix) -->
                         <div class="form-group" style="display: flex; gap: 20px; margin-bottom: 15px; background: #f1f5f9; padding: 12px 15px; border-radius: var(--radius-md); border: 1px solid var(--border); justify-content: center;">
                             <label class="radio-label-fix" style="cursor: pointer; color: var(--primary); font-weight: 700;">
                                 <input type="radio" name="taskType" value="task" checked onchange="toggleTaskTypeUI()"> Yêu Cầu Nộp Bài
@@ -856,30 +857,32 @@
                                 <input type="radio" name="taskType" value="reminder" onchange="toggleTaskTypeUI()"> Chỉ Nhắc Việc
                             </label>
                         </div>
-                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--primary);">
-                                <input type="radio" name="taskType" value="task" checked onchange="toggleTaskTypeUI()"> Yêu Cầu Nộp Bài
-                            </label>
-                            <label style="display: flex; align-items: center; gap: 5px; cursor: pointer; color: var(--warning);">
-                                <input type="radio" name="taskType" value="reminder" onchange="toggleTaskTypeUI()"> Chỉ Nhắc Việc
-                            </label>
-                        </div>
+
                         <div class="form-group"><label>Tiêu đề</label><input type="text" id="ctTitle" required placeholder="Nhập tiêu đề..."></div>
+                        
                         <div class="form-group"><label>Người đại diện giao</label><select id="ctAssigner" class="excel-input" style="text-align: left;"></select></div>
+                        
                         <div class="form-group">
                             <label>Phạm vi áp dụng</label>
                             <div class="scope-scrollbox">
                                 <div class="scope-item" style="border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 5px;">
-                                    <label style="color: var(--danger); font-weight: bold !important;"><input type="checkbox" id="scopeAll" onchange="toggleAllScopes(this)"> ÁP DỤNG TOÀN HỆ THỐNG</label>
+                                    <label style="color: var(--danger); font-weight: bold !important; display: flex !important; align-items: center; gap: 8px;">
+                                        <input type="checkbox" id="scopeAll" onchange="toggleAllScopes(this)"> ÁP DỤNG TOÀN HỆ THỐNG
+                                    </label>
                                 </div>
                                 <div id="scopeListContainer"></div>
                             </div>
                         </div>
+                        
                         <div class="form-group"><label>Nội dung chi tiết</label><textarea id="ctDesc" style="height: 60px;" placeholder="Yêu cầu cụ thể..."></textarea></div>
+                        
                         <div class="form-group" id="timeZoneTask"><label>Hạn chót nộp bài (Deadline)</label><input type="datetime-local" id="ctDeadline"></div>
+                        
                         <div class="form-group" id="timeZoneReminder" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div><label>Hiệu lực TỪ</label><input type="datetime-local" id="ctStartDate"></div>
                             <div><label>Hiệu lực ĐẾN</label><input type="datetime-local" id="ctEndDate"></div>
                         </div>
+                        
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
                             <button type="button" class="btn-outline" style="flex: 1;" onclick="document.getElementById('createTaskModal').style.display='none'">Hủy</button>
                             <button type="submit" class="btn-primary" style="flex: 2;"><i class="fa-solid fa-paper-plane"></i> Gửi Đi</button>
