@@ -3585,6 +3585,21 @@
 
         // 3. Logic Nộp và Phê Duyệt File Toàn Cục
         function openTaskDetail(taskId) {
+            let task = globalTasks.find(t => t.id === taskId); 
+            if(!task) return;
+            currentOpenTaskId = taskId;
+            
+            document.getElementById('tdTitle').innerText = task.title; 
+            document.getElementById('tdDesc').innerText = task.desc; 
+            document.getElementById('tdDeadline').innerText = task.deadline ? new Date(task.deadline).toLocaleString('vi-VN') : 'Không có';
+            
+            let statusHtml = '';
+            if(task.status === 'todo') statusHtml = `<span class="status-badge status-todo">Chờ nộp</span>`;
+            if(task.status === 'pending') statusHtml = `<span class="status-badge status-pending">Đang chờ duyệt</span>`;
+            if(task.status === 'approved') statusHtml = `<span class="status-badge status-approved">Hoàn thành</span>`;
+            if(task.status === 'rejected') statusHtml = `<span class="status-badge status-rejected">Cần sửa lại</span>`;
+            document.getElementById('tdStatus').innerHTML = statusHtml;
+
             // Xử lý Timeline (Nhật ký)
             let tlHtml = ''; 
             let dotColor = { 'created': '#94a3b8', 'submitted': '#3b82f6', 'approved': '#22c55e', 'rejected': '#ef4444' };
@@ -3598,6 +3613,22 @@
                     tlHtml += `<div class="timeline-item"><div class="timeline-dot" style="border-color: ${dotColor[h.action] || '#3b82f6'};"></div><div class="timeline-time">${h.time} - Bởi <b>${h.actor}</b></div><div class="timeline-content ${contentClass}">${esc(h.detail)}${linkHtml}</div></div>`;
                 });
             }
+            document.getElementById('tdTimeline').innerHTML = tlHtml;
+
+            // Xử lý phân quyền hiển thị Zone Nộp bài / Zone Duyệt bài
+            let canSubmit = (task.status === 'todo' || task.status === 'rejected') && (currentUser.role !== 'admin');
+            let canApprove = (task.status === 'pending') && (currentUser.role === 'admin' || currentUser.role === 'lead');
+            
+            document.getElementById('submissionZone').style.display = canSubmit ? 'block' : 'none';
+            document.getElementById('approvalZone').style.display = canApprove ? 'block' : 'none';
+
+            document.getElementById('taskLinkInput').value = ''; 
+            document.getElementById('taskFileInput').value = ''; 
+            document.getElementById('taskFeedback').value = '';
+            
+            // LỆNH QUAN TRỌNG NHẤT: BẬT MODAL
+            document.getElementById('taskDetailModal').style.display = 'flex';
+        }
             document.getElementById('tdTimeline').innerHTML = tlHtml;
 
         async function submitTaskProof() {
