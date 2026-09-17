@@ -925,7 +925,6 @@
                                     <td><input type="text" id="newGLVDOB" class="excel-input new-row-input" placeholder="DD-MM-YYYY"></td>
                                     <td><input type="text" id="newGLVSdt" class="excel-input new-row-input"></td>
                                     <td><input type="text" id="newGLVEmail" class="excel-input new-row-input"></td>
-                                    <!-- Đổi Input Bằng cấp thành Select -->
                                     <td>
                                         <select id="newGLVBangCap" class="excel-input new-row-input">
                                             <option value="">-- Chọn Bằng Cấp --</option>
@@ -984,6 +983,42 @@
                 </div>
             </div>
 
+            <!-- System Admin Tab -->
+            <div id="tab-system-admin" class="tab-content">
+                <div class="page-header"><div><h1 style="color: var(--danger);">Quản Trị Nhân Sự & Hệ Thống</h1><p>Duyệt yêu cầu quyền hạn và nạp dữ liệu phân công hàng loạt cho NĂM HỌC HIỆN TẠI.</p></div></div>
+                <div class="card" style="border-top: 4px solid var(--warning);">
+                    <div class="card-header"><span style="color: var(--warning); font-weight: 700;"><i class="fa-solid fa-envelope-open-text"></i> Hộp Thư Phê Duyệt Thay Đổi Quyền</span></div>
+                    <div class="card-body" style="padding: 0;">
+                        <div class="table-responsive">
+                            <table class="excel-table">
+                                <thead><tr><th>Thời Gian</th><th class="text-left">Người Yêu Cầu</th><th>Lớp Đang Dạy</th><th>Quyền Hiện Tại</th><th>Quyền Muốn Đổi</th><th>Phê Duyệt</th></tr></thead>
+                                <tbody id="approvalTbody"></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                <div class="card" style="border-top: 4px solid var(--primary); margin-top: 1.5rem;">
+                    <div class="card-header">
+                        <span style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-server"></i> Nạp Dữ Liệu Phân Công (Excel) Vào Năm Học Này</span>
+                        <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="downloadAdminTemplate()">
+                            <i class="fa-solid fa-file-arrow-down"></i> Tải File Mẫu
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
+                            <strong>Định dạng file yêu cầu (3 cột):</strong> Hàng đầu tiên làm tiêu đề. Cột 1: <code>Họ và Tên</code>, Cột 2: <code>Chi Đoàn</code>, Cột 3: <code>Quyền Hạn</code> (lead, assistant, collab). 
+                            <br><i style="font-size: 0.85rem; color: var(--success); margin-top: 5px; display: inline-block;">* Hệ thống sẽ tự động cấp mật khẩu mặc định là '1' cho các tài khoản mới.</i>
+                        </div>
+                        <div class="file-upload-wrapper">
+                            <input type="file" id="adminUpload" accept=".xlsx, .xls, .csv" onchange="handleAdminMassAssignment(event)">
+                            <div class="file-upload-btn" style="background: white; border-color: var(--primary); color: var(--primary);">
+                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 10px;"></i><br>Tải File Phân Công Lên Máy Chủ
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Year Admin Tab (QUẢN LÝ NĂM HỌC TỔNG) -->
             <div id="tab-year-admin" class="tab-content">
                 <div class="page-header"><div><h1 style="color: var(--info);">Tổng Kết Năm Học</h1><p>Bảng điểm tổng quát của toàn bộ các Chi Đoàn trong năm học hiện tại.</p></div></div>
@@ -1008,7 +1043,6 @@
                     </div>
                 </div>
             </div>
-
         </div>
     </main>
 
