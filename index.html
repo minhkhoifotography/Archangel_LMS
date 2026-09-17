@@ -419,7 +419,31 @@
             </form>
         </div>
     </div>
+<!-- Custom Delete Confirmation Modal -->
+    <div class="overlay-bg" id="deleteConfirmModal" style="display: none; z-index: 10006;">
+        <div class="auth-box" style="text-align: center; max-width: 480px; padding: 2.5rem;">
+            <div id="delModalStep1">
+                <i class="fa-solid fa-triangle-exclamation" style="font-size: 3rem; color: var(--warning); margin-bottom: 1rem;"></i>
+                <h2 style="font-size: 1.5rem; color: var(--text-main);">Xác nhận Xóa</h2>
+                <p id="delModalText1" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1.05rem;">Bạn đã chắc chắn muốn xóa ... chưa?</p>
+                <div style="display: flex; gap: 10px; justify-content: center;">
+                    <button class="btn-reject" onclick="nextDeleteStep()">Rồi</button>
+                    <button class="btn-outline" onclick="closeDeleteModal()">Chưa</button>
+                </div>
+            </div>
 
+            <div id="delModalStep2" style="display: none;">
+                <i class="fa-solid fa-skull-crossbones" style="font-size: 3rem; color: var(--danger); margin-bottom: 1rem;"></i>
+                <h2 style="font-size: 1.5rem; color: var(--danger);">Cảnh báo Mất Dữ Liệu</h2>
+                <p id="delModalText2" style="color: var(--text-muted); margin-bottom: 2rem; font-size: 1rem;">Đoạn dữ liệu về ... đó sẽ mất vĩnh viễn. Bạn có muốn xóa nó không?</p>
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    <button class="btn-outline" style="color: var(--danger); border-color: var(--danger);" onclick="executeDelete(false)">Tôi muốn xóa và <b>KHÔNG</b> lưu dữ liệu</button>
+                    <button class="btn-save" onclick="executeDelete(true)"><i class="fa-solid fa-download"></i> Tôi muốn xóa và <b>LƯU</b> dữ liệu (Backup)</button>
+                    <button class="btn-primary" onclick="closeDeleteModal()">Tôi không muốn xóa nữa</button>
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Sidebar -->
     <aside class="sidebar">
         <div class="sidebar-header">
@@ -462,11 +486,15 @@
                 <div class="year-badge">
                     <i class="fa-solid fa-calendar-days"></i>
                     <select id="globalYearSelect" class="admin-select" onchange="changeAcademicYear(this.value)"></select>
+                    <!-- Nút xóa Năm học -->
+                    <i class="fa-solid fa-xmark" id="btnDeleteYear" style="color: var(--danger); cursor: pointer; display: none; margin-left: 5px; font-size: 1.1rem; transition: 0.2s;" onclick="startDeleteProcess('year')" title="Xóa năm học này"></i>
                 </div>
                 <div class="class-badge">
                     <i class="fa-solid fa-chalkboard-user"></i>
                     <span id="topbarChiDoanTxt">Chi Đoàn</span>
                     <select id="adminTopClassSelect" class="admin-select" onchange="switchClass(this.value)" style="display: none;"></select>
+                    <!-- Nút xóa Lớp học -->
+                    <i class="fa-solid fa-xmark" id="btnDeleteClass" style="color: var(--danger); cursor: pointer; display: none; margin-left: 5px; font-size: 1.1rem; transition: 0.2s;" onclick="startDeleteProcess('class')" title="Xóa lớp học này"></i>
                 </div>
                 
                 <div id="cloudStatus" class="cloud-status cloud-offline" style="margin-left: auto;" onclick="forceSync()" title="Bấm để ép tải dữ liệu lên Đám mây">
@@ -937,7 +965,7 @@
         let authDB = {}; let globalUsers = []; let roleRequests = []; let state = { teams: [], settings: {}, rawList: [] };
         let currentUser = null; let currentViewClass = null; let currentSheet = 'hk1'; let chartInstance = null, studentChartInstance = null;
 
-        const CHI_DOAN_LIST = [
+        let CHI_DOAN_LIST = [
             "Chiên 1A","Chiên 1B","Chiên 2A","Chiên 2B","Ấu 1A","Ấu 1B","Ấu 1C","Ấu 2A","Ấu 2B","Ấu 2C",
             "Thiếu 1A","Thiếu 1B","Thiếu 1C","Thiếu 2A","Thiếu 2B","Thiếu 2C","Thiếu 3A","Thiếu 3B","Thiếu 3C",
             "Nghĩa 1","Nghĩa 2","Hiệp 1","Hiệp 2","Dự Trưởng", "Hệ Thống Admin"
@@ -1225,26 +1253,19 @@
         }
         function logout() { location.reload(); }
 
-        async function finishLogin() {
-            try {
-                document.getElementById('loginOverlay').style.display = 'none'; document.getElementById('forcePasswordOverlay').style.display = 'none';
-                if (currentUser.role === 'admin') {
+        if (currentUser.role === 'admin') {
                     currentViewClass = CHI_DOAN_LIST.find(c => c === "Thiếu 3C") || CHI_DOAN_LIST[0]; 
-                    document.getElementById('topbarChiDoanTxt').style.display = 'none'; document.getElementById('adminTopClassSelect').style.display = 'inline-block'; document.getElementById('adminTopClassSelect').value = currentViewClass; document.getElementById('navSystemAdmin').style.display = 'flex'; document.getElementById('navYearAdmin').style.display = 'flex'; document.querySelector('#profRole option[value="admin"]').style.display = 'block';
+                    document.getElementById('topbarChiDoanTxt').style.display = 'none'; 
+                    document.getElementById('adminTopClassSelect').style.display = 'inline-block'; 
+                    document.getElementById('adminTopClassSelect').value = currentViewClass; 
+                    document.getElementById('navSystemAdmin').style.display = 'flex'; 
+                    document.getElementById('navYearAdmin').style.display = 'flex'; 
+                    document.querySelector('#profRole option[value="admin"]').style.display = 'block';
+                    
+                    // MỞ HIỂN THỊ 2 NÚT XÓA CHO ADMIN
+                    document.getElementById('btnDeleteYear').style.display = 'inline-block';
+                    document.getElementById('btnDeleteClass').style.display = 'inline-block';
                 } else {
-                    currentViewClass = currentUser.chidoan;
-                    document.getElementById('topbarChiDoanTxt').style.display = 'inline-block'; document.getElementById('topbarChiDoanTxt').innerText = currentViewClass; document.getElementById('adminTopClassSelect').style.display = 'none'; document.getElementById('navSystemAdmin').style.display = 'none'; document.getElementById('navYearAdmin').style.display = 'none';
-                }
-                document.getElementById('displayUsername').innerText = currentUser.username;
-                let roleStr = currentUser.role === 'admin' ? 'SUPER ADMIN' : (currentUser.role === 'lead' ? 'GLV CHÍNH' : (currentUser.role === 'assistant' ? 'GLV Phó' : 'Hỗ Trợ'));
-                document.getElementById('displayRole').innerText = roleStr;
-                if(currentUser.role === 'collab') document.querySelector('.nav-item[data-tab="settings"]').style.display = 'none';
-
-                await loadClassData(); 
-                switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); showToast(`Đăng nhập thành công! Quyền: ${roleStr}`);
-                setupRealtimeListeners();
-            } catch(e) { console.error(e); showToast("Lỗi nạp cấu trúc: " + e.message, "error"); }
-        }
 
         function setupRealtimeListeners() {
             if(!isCloudConnected || !db) return;
@@ -2632,6 +2653,133 @@
                     drawWheel();
                 }
                 lastWinnerIndex = -1;
+            }
+        }
+        // ================= HỆ THỐNG XÓA NĂM HỌC & LỚP HỌC 2 BƯỚC =================
+        let deleteTargetType = ''; // 'year' hoặc 'class'
+        let targetNameToDelete = '';
+
+        function startDeleteProcess(type) {
+            deleteTargetType = type;
+            targetNameToDelete = (type === 'year') ? activeYear : currentViewClass;
+
+            if (type === 'year' && systemYears.length <= 1) {
+                return showToast("Không thể xóa năm học duy nhất của hệ thống!", "error");
+            }
+            if (type === 'class' && CHI_DOAN_LIST.length <= 2) {
+                return showToast("Không thể xóa lớp học duy nhất!", "error");
+            }
+
+            let typeVN = (type === 'year') ? 'năm học' : 'lớp học';
+            document.getElementById('delModalText1').innerText = `Bạn đã chắc chắn muốn xóa ${typeVN} [${targetNameToDelete}] chưa?`;
+            
+            document.getElementById('delModalStep1').style.display = 'block';
+            document.getElementById('delModalStep2').style.display = 'none';
+            document.getElementById('deleteConfirmModal').style.display = 'flex';
+        }
+
+        function nextDeleteStep() {
+            let typeVN = (deleteTargetType === 'year') ? 'năm học' : 'lớp học';
+            document.getElementById('delModalText2').innerText = `Đoạn dữ liệu về ${typeVN} [${targetNameToDelete}] sẽ mất vĩnh viễn. Bạn có muốn xóa nó không?`;
+            
+            document.getElementById('delModalStep1').style.display = 'none';
+            document.getElementById('delModalStep2').style.display = 'flex';
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deleteConfirmModal').style.display = 'none';
+            deleteTargetType = '';
+            targetNameToDelete = '';
+        }
+
+        async function executeDelete(withBackup) {
+            const btnOriginalText = event.target.innerHTML;
+            event.target.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang xử lý...';
+            
+            try {
+                if (withBackup) {
+                    // Xử lý xuất file JSON Backup trước khi xóa
+                    let backupData = {};
+                    let fileName = "";
+                    if (deleteTargetType === 'year') {
+                        backupData = await fetchFromDB(`classes/${targetNameToDelete}`, {});
+                        fileName = `Backup_LMS_Year_${targetNameToDelete}.json`;
+                    } else {
+                        backupData = state; // State hiện tại của lớp
+                        fileName = `Backup_LMS_Class_${targetNameToDelete}_${activeYear}.json`;
+                    }
+                    
+                    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(backupData));
+                    const downloadAnchorNode = document.createElement('a');
+                    downloadAnchorNode.setAttribute("href", dataStr);
+                    downloadAnchorNode.setAttribute("download", fileName);
+                    document.body.appendChild(downloadAnchorNode); 
+                    downloadAnchorNode.click();
+                    downloadAnchorNode.remove();
+                    showToast("Đã tải xuống file Backup!", "success");
+                }
+
+                // Xử lý Xóa Dữ liệu
+                if (deleteTargetType === 'year') {
+                    // Xóa khỏi mảng và lưu lại
+                    systemYears = systemYears.filter(y => y !== targetNameToDelete);
+                    saveToDB('system/years', systemYears);
+                    
+                    // Xóa trên Firebase
+                    if(isCloudConnected && db) {
+                        await db.ref(`classes/${targetNameToDelete}`).remove();
+                        await db.ref(`users/${targetNameToDelete}`).remove();
+                    }
+                    
+                    // Xóa defaultYear nếu đang trùng
+                    let globalDefaultYear = await fetchFromDB('system/defaultYear', null);
+                    if (globalDefaultYear === targetNameToDelete) {
+                        await db.ref('system/defaultYear').remove();
+                    }
+
+                    // Chuyển sang năm học khác (năm cuối cùng còn lại)
+                    activeYear = systemYears[systemYears.length - 1];
+                    localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
+                    renderYearDropdowns();
+                    await loadYearData();
+                    
+                } else if (deleteTargetType === 'class') {
+                    CHI_DOAN_LIST = CHI_DOAN_LIST.filter(c => c !== targetNameToDelete);
+                    
+                    // Xóa trên Firebase
+                    if(isCloudConnected && db) {
+                        await db.ref(`classes/${activeYear}/${targetNameToDelete}`).remove();
+                    }
+                    
+                    // Chuyển sang lớp khác
+                    currentViewClass = CHI_DOAN_LIST.find(c => c !== "Hệ Thống Admin");
+                    
+                    // Render lại dropdown Lớp
+                    const adminSelect = document.getElementById('adminTopClassSelect');
+                    adminSelect.innerHTML = '';
+                    CHI_DOAN_LIST.forEach(cd => {
+                        adminSelect.innerHTML += `<option value="${cd}" ${cd === currentViewClass ? 'selected' : ''}>${cd}</option>`;
+                    });
+                    adminSelect.innerHTML += `<option value="add_new_class" style="font-weight: bold; color: #059669;">+ Thêm lớp mới...</option>`;
+                    document.getElementById('topbarChiDoanTxt').innerText = currentViewClass;
+                    
+                    await loadClassData();
+                }
+
+                closeDeleteModal();
+                showToast(`Đã xóa vĩnh viễn ${targetNameToDelete}`, "success");
+                
+                // Khởi động lại luồng lắng nghe và giao diện
+                if(isCloudConnected) {
+                    db.ref(`classes`).off();
+                    setupRealtimeListeners();
+                }
+                switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]'));
+
+            } catch (err) {
+                console.error(err);
+                showToast("Lỗi khi xóa: " + err.message, "error");
+                event.target.innerHTML = btnOriginalText;
             }
         }
     </script>
