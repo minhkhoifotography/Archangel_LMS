@@ -849,10 +849,10 @@
                 </div>
             </div>
 
-            <!-- GLV Profile Tab (Dành cho Admin) -->
+<!-- GLV Profile Tab (Dành cho Admin) -->
             <div id="tab-glv-profile" class="tab-content">
                 <div class="page-header">
-                    <div><h1 style="color: #a78bfa;">Hồ Sơ Giáo Lý Viên</h1><p>Quản lý lý lịch và thông tin cá nhân của Ban Huynh trưởng - Giáo lý viên.</p></div>
+                    <div><h1 style="color: #a78bfa;">Hồ Sơ Giáo Lý Viên</h1><p>Quản lý lý lịch, thông tin cá nhân và tài khoản đăng nhập của Ban Huynh trưởng - Giáo lý viên.</p></div>
                 </div>
                 
                 <div class="card">
@@ -862,7 +862,8 @@
                             <thead>
                                 <tr>
                                     <th style="min-width: 120px;">Tên Thánh</th>
-                                    <th style="min-width: 180px;">Họ và Tên (Tên Đăng Nhập) *</th>
+                                    <th style="min-width: 150px;">Tên Đăng Nhập *</th>
+                                    <th style="min-width: 180px;">Họ và Tên</th>
                                     <th style="min-width: 130px;">Ngày Sinh</th>
                                     <th style="min-width: 130px;">Số Điện Thoại</th>
                                     <th style="min-width: 180px;">Email</th>
@@ -873,7 +874,8 @@
                             <tbody>
                                 <tr style="background: #f8fafc;">
                                     <td><input type="text" id="newGLVTenThanh" class="excel-input new-row-input"></td>
-                                    <td><input type="text" id="newGLVName" class="excel-input new-row-input" placeholder="Nhập Họ và tên..."></td>
+                                    <td><input type="text" id="newGLVUsername" class="excel-input new-row-input" placeholder="VD: khoiluu"></td>
+                                    <td><input type="text" id="newGLVName" class="excel-input new-row-input" placeholder="VD: Lưu Minh Khôi"></td>
                                     <td><input type="text" id="newGLVDOB" class="excel-input new-row-input" placeholder="DD-MM-YYYY"></td>
                                     <td><input type="text" id="newGLVSdt" class="excel-input new-row-input"></td>
                                     <td><input type="text" id="newGLVEmail" class="excel-input new-row-input"></td>
@@ -887,12 +889,13 @@
 
                 <div class="card" style="border-top: 4px solid #8b5cf6;">
                     <div class="card-header"><span style="color: #8b5cf6; font-weight: 700;"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Huynh Trưởng - GLV</span></div>
-                    <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                    <div class="table-responsive" style="max-height: 45vh; overflow-y: auto;">
                         <table class="excel-table">
                             <thead>
                                 <tr>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">STT</th>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Tên Thánh</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Tên Đăng Nhập</th>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Họ và Tên</th>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Ngày Sinh</th>
                                     <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Số Điện Thoại</th>
@@ -905,33 +908,21 @@
                         </table>
                     </div>
                 </div>
-            </div>
-            <!-- System Admin Tab -->
-            <div id="tab-system-admin" class="tab-content">
-                <div class="page-header"><div><h1 style="color: var(--danger);">Quản Trị Nhân Sự & Hệ Thống</h1><p>Duyệt yêu cầu quyền hạn và nạp dữ liệu phân công hàng loạt cho NĂM HỌC HIỆN TẠI.</p></div></div>
-                <div class="card" style="border-top: 4px solid var(--warning);">
-                    <div class="card-header"><span style="color: var(--warning); font-weight: 700;"><i class="fa-solid fa-envelope-open-text"></i> Hộp Thư Phê Duyệt Thay Đổi Quyền</span></div>
-                    <div class="card-body" style="padding: 0;">
-                        <div class="table-responsive">
-                            <table class="excel-table">
-                                <thead><tr><th>Thời Gian</th><th class="text-left">Người Yêu Cầu</th><th>Lớp Đang Dạy</th><th>Quyền Hiện Tại</th><th>Quyền Muốn Đổi</th><th>Phê Duyệt</th></tr></thead>
-                                <tbody id="approvalTbody"></tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-                <div class="card" style="border-top: 4px solid var(--primary); margin-top: 1.5rem;">
-                    <div class="card-header"><span style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-server"></i> Nạp Dữ Liệu Phân Công (Excel) Vào Năm Học Này</span></div>
-                    <div class="card-body">
-                        <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
-                            <strong>Định dạng file yêu cầu:</strong> Hàng đầu tiên làm tiêu đề. Cột 1: <code>Họ Tên</code>, Cột 2: <code>Mật Khẩu</code> (bỏ trống tự nhận '1'), Cột 3: <code>Chi Đoàn</code>, Cột 4: <code>Quyền Hạn</code> (lead, assistant, collab).
-                        </div>
-                        <div class="file-upload-wrapper">
-                            <input type="file" id="adminUpload" accept=".xlsx, .csv" onchange="handleAdminMassAssignment(event)">
-                            <div class="file-upload-btn" style="background: white; border-color: var(--primary); color: var(--primary);">
-                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 10px;"></i><br>Tải File Phân Công Lên Máy Chủ
-                            </div>
-                        </div>
+
+                <!-- Bảng Quản Lý Mật Khẩu -->
+                <div class="card" style="border-top: 4px solid #f43f5e;">
+                    <div class="card-header"><span style="color: #e11d48; font-weight: 700;"><i class="fa-solid fa-key"></i> Quản Lý Mật Khẩu Hệ Thống</span></div>
+                    <div class="table-responsive" style="max-height: 40vh; overflow-y: auto;">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2; width: 60px;">STT</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;" class="text-left">Tên Đăng Nhập (Username)</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2; width: 300px;">Mật Khẩu Đang Dùng (Có thể sửa)</th>
+                                </tr>
+                            </thead>
+                            <tbody id="glvPasswordTbody"></tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -2963,18 +2954,20 @@
                 event.target.innerHTML = btnOriginalText;
             }
         }
-        // ================= XỬ LÝ HỒ SƠ GIÁO LÝ VIÊN =================
+        // ================= XỬ LÝ HỒ SƠ GIÁO LÝ VIÊN & MẬT KHẨU =================
         function renderGLVProfiles() {
             const tbody = document.getElementById('glvProfilesTbody'); if(!tbody) return; tbody.innerHTML = '';
             let stt = 1;
             globalUsers.forEach(u => {
                 if (u.username.toLowerCase() === 'admin') return;
-                let p = u.profile || { tenThanh: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
+                let p = u.profile || { tenThanh: '', hoTen: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
+                let displayHoTen = p.hoTen || u.username; // Nếu chưa có họ tên (data cũ), lấy tên đăng nhập hiển thị tạm
                 
                 tbody.innerHTML += `<tr>
                     <td>${stt++}</td>
                     <td><input type="text" class="excel-input text-left" value="${esc(p.tenThanh)}" onblur="updateGLVProfile('${u.username}', 'tenThanh', this.value)"></td>
-                    <td class="text-left" style="font-weight: 600;">${u.username}</td>
+                    <td class="text-left" style="font-weight: bold; color: var(--primary);">${u.username}</td>
+                    <td><input type="text" class="excel-input text-left" value="${esc(displayHoTen)}" onblur="updateGLVProfile('${u.username}', 'hoTen', this.value)" style="font-weight: 600;"></td>
                     <td><input type="text" class="excel-input" value="${esc(p.ngaySinh)}" onblur="updateGLVProfile('${u.username}', 'ngaySinh', this.value)" placeholder="DD-MM-YYYY"></td>
                     <td><input type="text" class="excel-input" value="${esc(p.sdt)}" onblur="updateGLVProfile('${u.username}', 'sdt', this.value)"></td>
                     <td><input type="text" class="excel-input text-left" value="${esc(p.email)}" onblur="updateGLVProfile('${u.username}', 'email', this.value)"></td>
@@ -2982,12 +2975,39 @@
                     <td><button class="btn-reject" style="padding: 0.35rem 0.65rem; border-radius: 4px; background:#ef4444;" onclick="deleteGLV('${u.username}')" title="Xóa tài khoản này"><i class="fa-solid fa-trash-can"></i></button></td>
                 </tr>`;
             });
+            renderPasswordList(); // Cập nhật luôn bảng mật khẩu bên dưới
+        }
+
+        function renderPasswordList() {
+            const tbody = document.getElementById('glvPasswordTbody'); if(!tbody) return; tbody.innerHTML = '';
+            let stt = 1;
+            for (let username in authDB) {
+                if (username.toLowerCase() === 'admin') continue; // Ẩn mật khẩu admin tối cao
+                
+                tbody.innerHTML += `<tr>
+                    <td>${stt++}</td>
+                    <td class="text-left" style="font-weight: bold; color: var(--text-main); font-size: 1.05rem;">${username}</td>
+                    <td>
+                        <input type="text" class="excel-input" value="${esc(authDB[username])}" onblur="adminUpdatePassword('${username}', this.value)" style="font-family: monospace; font-weight: 600; color: #e11d48; letter-spacing: 1px;" title="Sửa trực tiếp vào đây để đổi mật khẩu">
+                    </td>
+                </tr>`;
+            }
+        }
+
+        function adminUpdatePassword(username, newPass) {
+            let pass = newPass.trim();
+            if (!pass) return showToast("Mật khẩu không được để trống!", "warning");
+            if (authDB[username] !== pass) {
+                authDB[username] = pass;
+                saveToDB('auth', authDB);
+                showToast(`Đã thay đổi mật khẩu cho tài khoản: ${username}`, "success");
+            }
         }
 
         function updateGLVProfile(username, field, value) {
             let user = globalUsers.find(u => u.username === username);
             if(user) {
-                if(!user.profile) user.profile = { tenThanh: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
+                if(!user.profile) user.profile = { tenThanh: '', hoTen: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
                 user.profile[field] = value;
                 saveToDB("users/" + activeYear, globalUsers);
             }
@@ -2995,59 +3015,61 @@
 
         function addNewGLVRow() {
             let tenThanh = document.getElementById('newGLVTenThanh').value.trim();
-            let name = document.getElementById('newGLVName').value.trim();
+            let usernameInput = document.getElementById('newGLVUsername').value.trim();
+            let hoTen = document.getElementById('newGLVName').value.trim();
             let ngaySinh = document.getElementById('newGLVDOB').value.trim();
             let sdt = document.getElementById('newGLVSdt').value.trim();
             let email = document.getElementById('newGLVEmail').value.trim();
             let bangCap = document.getElementById('newGLVBangCap').value.trim();
 
-            if(!name) return showToast("Họ và Tên (Tên đăng nhập) không được bỏ trống!", "warning");
+            if(!usernameInput) return showToast("Tên đăng nhập không được bỏ trống!", "error");
             
-            let normName = normalizeStr(name);
+            let normName = normalizeStr(usernameInput);
             let existingUser = globalUsers.find(u => normalizeStr(u.username) === normName);
             
             if (existingUser) {
-                // Nếu User đã tồn tại -> Chỉ cập nhật hồ sơ
+                // Nếu Username đã tồn tại -> Chỉ cập nhật hồ sơ
                 if(!existingUser.profile) existingUser.profile = {};
                 if(tenThanh) existingUser.profile.tenThanh = tenThanh;
+                if(hoTen) existingUser.profile.hoTen = hoTen;
                 if(ngaySinh) existingUser.profile.ngaySinh = ngaySinh;
                 if(sdt) existingUser.profile.sdt = sdt;
                 if(email) existingUser.profile.email = email;
                 if(bangCap) existingUser.profile.bangCap = bangCap;
-                showToast("Đã cập nhật hồ sơ cho GLV: " + name, "success");
+                showToast("Đã cập nhật hồ sơ cho tài khoản: " + usernameInput, "success");
             } else {
-                // Nếu User chưa tồn tại -> Tạo luôn tài khoản đăng nhập
+                // Nếu Username chưa tồn tại -> Tạo luôn tài khoản đăng nhập
                 let newUser = {
-                    username: name,
+                    username: usernameInput,
                     chidoan: "Chưa phân công",
                     role: "collab",
                     nhiemVu: "Chưa phân công",
                     banTruc: "Chưa phân công",
-                    profile: { tenThanh: tenThanh, ngaySinh: ngaySinh, sdt: sdt, email: email, bangCap: bangCap }
+                    profile: { tenThanh: tenThanh, hoTen: hoTen, ngaySinh: ngaySinh, sdt: sdt, email: email, bangCap: bangCap }
                 };
                 globalUsers.push(newUser);
                 // Khởi tạo mật khẩu mặc định "1"
-                authDB[name] = "1"; 
+                authDB[usernameInput] = "1"; 
                 saveToDB('auth', authDB);
-                showToast("Tạo mới tài khoản GLV: " + name + " (Mật khẩu: 1)", "success");
+                showToast("Tạo mới tài khoản: " + usernameInput + " (Mật khẩu: 1)", "success");
             }
             
             saveToDB("users/" + activeYear, globalUsers);
             renderGLVProfiles();
             if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
             
-            ['newGLVTenThanh','newGLVName','newGLVDOB','newGLVSdt','newGLVEmail','newGLVBangCap'].forEach(id => document.getElementById(id).value = '');
+            ['newGLVTenThanh','newGLVUsername','newGLVName','newGLVDOB','newGLVSdt','newGLVEmail','newGLVBangCap'].forEach(id => document.getElementById(id).value = '');
         }
 
         function deleteGLV(username) {
-            if(!confirm(`CẢNH BÁO: Xác nhận xóa HOÀN TOÀN tài khoản và hồ sơ của Giáo Lý Viên: [${username}]?`)) return;
+            if(!confirm(`CẢNH BÁO: Xác nhận xóa HOÀN TOÀN tài khoản và hồ sơ của: [${username}]?`)) return;
             globalUsers = globalUsers.filter(u => u.username !== username);
             delete authDB[username];
             saveToDB('auth', authDB);
             saveToDB("users/" + activeYear, globalUsers);
             renderGLVProfiles();
             if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
-            showToast("Đã xóa tài khoản GLV thành công!", "success");
+            showToast("Đã xóa tài khoản thành công!", "success");
         }
     </script>
 </body>
