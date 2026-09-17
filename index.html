@@ -3623,33 +3623,6 @@
             document.getElementById('scopeAll').checked = false;
             document.getElementById('createTaskModal').style.display = 'flex';
         }
-
-        // 2. Logic Lưu & Phân loại Nhiệm vụ
-        function submitNewTask() {
-            let type = document.querySelector('input[name="taskType"]:checked').value;
-            let scopes = document.getElementById('scopeAll').checked ? ['ALL'] : Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
-            if (scopes.length === 0) return showToast("Vui lòng chọn ít nhất 1 phạm vi áp dụng!", "warning");
-
-            let task = {
-                id: Date.now(), type: type, title: document.getElementById('ctTitle').value.trim(), desc: document.getElementById('ctDesc').value.trim(),
-                assigner: document.getElementById('ctAssigner').value, scopes: scopes, creator: currentUser.username,
-                history: [{ time: new Date().toLocaleString('vi-VN'), action: 'created', actor: currentUser.username, detail: 'Đã khởi tạo' }]
-            };
-
-            if (type === 'task') { task.deadline = document.getElementById('ctDeadline').value; task.status = 'todo'; } 
-            else { task.startDate = document.getElementById('ctStartDate').value; task.endDate = document.getElementById('ctEndDate').value; task.status = 'active'; }
-
-            db.ref(`tasks/${activeYear}/global_tasks/${task.id}`).set(task).then(() => {
-                showToast("Đã phát hành thành công!", "success");
-                document.getElementById('createTaskModal').style.display = 'none';
-                
-                // Lệnh gọi Chuông đã bị xóa ở đây. 
-                // Nhiệm vụ rung chuông sẽ được giao cho Firebase lo liệu (để rung đồng loạt trên mọi thiết bị hợp lệ).
-            });
-        }
-        // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới, đâu là thông báo cũ
-        window.lastMaxTaskId = window.lastMaxTaskId || 0;
-
         // 2. Logic Lưu & Phân loại Nhiệm vụ
         function submitNewTask() {
             let type = document.querySelector('input[name="taskType"]:checked').value;
@@ -3672,10 +3645,6 @@
         }
 
         // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
-        window.lastMaxTaskId = window.lastMaxTaskId || 0;
-
-        function listenToTasks() {
-            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
         window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
@@ -3730,7 +3699,6 @@
                 if(document.getElementById('tab-reminders').classList.contains('active')) renderReminderBoard();
             });
         }
-
         function renderTaskBoard() {
             const grid = document.getElementById('taskBoardGrid'); grid.innerHTML = '';
             let tasksOnly = globalTasks.filter(t => t.type === 'task');
