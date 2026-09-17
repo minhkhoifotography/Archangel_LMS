@@ -183,10 +183,19 @@
 
         /* Auth Overlays Glass */
         .overlay-bg { 
-            position: absolute; top: 0; left: 0; width: 100%; min-height: 100%; 
+            position: fixed; /* SỬA TỪ absolute THÀNH fixed */
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; /* Sửa min-height thành height để chốt cứng theo màn hình */
             background: rgba(15, 23, 42, 0.4); 
-            backdrop-filter: blur(20px) saturate(180%); -webkit-backdrop-filter: blur(20px) saturate(180%);
-            z-index: 9999; display: flex; justify-content: center; align-items: center; 
+            backdrop-filter: blur(20px) saturate(180%); 
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            z-index: 9999; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            overflow-y: auto; /* Bổ sung thêm dòng này: Đảm bảo nếu màn hình điện thoại quá lùn, form vẫn có thể cuộn được mà không bị cắt mất chữ */
         }
         .auth-box { 
             width: 100%; max-width: 420px; padding: 3rem 2.5rem; 
