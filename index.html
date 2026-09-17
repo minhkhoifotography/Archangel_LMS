@@ -561,10 +561,25 @@
             </div>
             <div style="color: var(--text-muted); font-weight: 500; display: none;" id="desktopClock"><i class="fa-regular fa-clock"></i> <span id="currentTime"></span></div>
             <!-- KHU VỰC THÔNG BÁO VÀ CLOUD (MỚI) -->
-                <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+            <div style="margin-left: auto; display: flex; align-items: center; gap: 15px;">
+                <!-- THÊM ĐOẠN NÀY ĐỂ HIỂN THỊ CHUÔNG THÔNG BÁO -->
+                <div class="notification-wrapper">
+                    <div class="notification-icon" onclick="toggleNotiDropdown()">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="notification-badge" id="notiBadgeCount">0</span>
+                    </div>
+                    <div class="notification-dropdown" id="notiDropdown">
+                        <div class="noti-header">
+                            <span>Thông Báo Nhắc Việc</span>
+                            <button class="btn-outline" style="padding: 2px 8px; font-size: 0.7rem;" onclick="markAllRead()">Đã đọc</button>
+                        </div>
+                        <div class="noti-list" id="notiListArea">
+                            <div style="padding: 1rem; text-align: center; color: var(--text-muted); font-style: italic;">Chưa có thông báo</div>
+                        </div>
+                    </div>
                 </div>
-        </header>
-
+                <!-- KẾT THÚC CHUÔNG -->
+            </div>
         <div class="content-area">
             
             <!-- Dashboard Tab -->
@@ -3629,7 +3644,6 @@
             // LỆNH QUAN TRỌNG NHẤT: BẬT MODAL
             document.getElementById('taskDetailModal').style.display = 'flex';
         }
-            document.getElementById('tdTimeline').innerHTML = tlHtml;
 
         async function submitTaskProof() {
             let link = document.getElementById('taskLinkInput').value.trim();
@@ -3678,7 +3692,10 @@
         }
 
         // 4. Chuông Thông Báo & Khởi chạy Listener
-        function toggleNotiDropdown() { let el = document.getElementById('notiDropdown'); el.style.display = el.style.display === 'flex' ? 'none' : 'flex'; }
+        function toggleNotiDropdown() { 
+            let el = document.getElementById('notiDropdown'); 
+            if(el) el.style.display = (el.style.display === 'flex') ? 'none' : 'flex'; 
+        }
         
         function createNotification(task) {
             let notiList = document.getElementById('notiListArea');
@@ -3703,6 +3720,94 @@
             originalSwitchTab(tabId, el);
             if(tabId === 'tasks' || tabId === 'reminders') { listenToTasks(); }
         };
+
+        // ================= CÁC HÀM XUẤT EXCEL (FIX LỖI THIẾU HÀM) =================
+        function exportToCSV() {
+            if(!state || !state.teams || state.teams.length === 0) return showToast("Không có dữ liệu để xuất!", "warning");
+            let data = [["Tổ/Nhóm", "Họ và Tên", "Điểm Cá Nhân", "Tổng Điểm Tổ"]];
+            
+            state.teams.forEach(t => {
+                let tPts = calcTeamPts(t);
+                t.members.forEach(m => {
+                    data.push([t.name, m.name, calcStudentPts(m.stats), tPts]);
+                });
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "BaoCaoNhanh");
+            XLSX.writeFile(wb, `Bao_Cao_Tong_Quan_${currentViewClass}.xlsx`);
+            showToast("Đã xuất Excel Báo cáo nhanh!", "success");
+        }
+
+        function exportStudentProfiles() {
+            let data = [];
+            getAllStudentsSorted().forEach(item => {
+                let m = item.m;
+                let p = m.profile || {};
+                data.push({
+                    "Tổ/Nhóm": item.team.name,
+                    "Tên Thánh": m.tenThanh || "",
+                    "Họ và Tên": m.name || "",
+                    "Giới Tính": p.gioiTinh === '0' ? "Nam" : (p.gioiTinh === '1' ? "Nữ" : ""),
+                    "Ngày Sinh": p.ngaySinh || "",
+                    "Ngày Rửa Tội": p.ngayRT || "",
+                    "Nơi Rửa Tội": p.noiRT || "",
+                    "Ngày RLLĐ": p.ngayRLLD || "",
+                    "Nơi RLLĐ": p.noiRLLD || "",
+                    "Họ Tên Cha": p.hoTenCha || "",
+                    "SĐT Cha": p.sdtCha || "",
+                    "Họ Tên Mẹ": p.hoTenMe || "",
+                    "SĐT Mẹ": p.sdtMe || "",
+                    "Địa Chỉ Nhà": p.diaChi || "",
+                    "Ghi Chú": p.ghiChu || ""
+                });
+            });
+            
+            if(data.length === 0) return showToast("Không có dữ liệu!", "warning");
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "LyLich");
+            XLSX.writeFile(wb, `Ly_Lich_Hoc_Sinh_${currentViewClass}.xlsx`);
+            showToast("Đã xuất Excel Hồ sơ lý lịch!", "success");
+        }
+
+        function exportAcademicSheet() {
+            let data = [];
+            getAllStudentsSorted().forEach(item => {
+                let m = item.m;
+                let avg1 = calcTermAvg(m, 'hk1');
+                let avg2 = calcTermAvg(m, 'hk2');
+                let final = calcYearAvg(avg1, avg2);
+                
+                data.push({
+                    "Tổ": item.team.name,
+                    "Tên Thánh": m.tenThanh || "",
+                    "Họ và Tên": m.name || "",
+                    "CC HK1": calcComputedCC(m, 'hk1').toFixed(2),
+                    "HK1 M15": m.academic.hk1.m15,
+                    "HK1 1T": m.academic.hk1.t1,
+                    "HK1 Thi": m.academic.hk1.thi,
+                    "ĐTB HK1": avg1,
+                    "CC HK2": calcComputedCC(m, 'hk2').toFixed(2),
+                    "HK2 M15": m.academic.hk2.m15,
+                    "HK2 1T": m.academic.hk2.t1,
+                    "HK2 Thi": m.academic.hk2.thi,
+                    "ĐTB HK2": avg2,
+                    "ĐTB CẢ NĂM": final,
+                    "Xếp Loại": getXepLoai(final),
+                    "Nhận Xét": m.academic.finalComment || ""
+                });
+            });
+            
+            if(data.length === 0) return showToast("Không có dữ liệu!", "warning");
+            const ws = XLSX.utils.json_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "SoDiem");
+            XLSX.writeFile(wb, `So_Diem_Hoc_Ba_${currentViewClass}.xlsx`);
+            showToast("Đã xuất Excel Sổ điểm!", "success");
+        }
+        
             // ================= XUẤT EXCEL DANH SÁCH GIÁO LÝ VIÊN =================
         function exportGLVProfiles() {
             let exportData = [];
