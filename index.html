@@ -15,6 +15,7 @@
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script> <!-- THÊM DÒNG NÀY -->
     
     <style>
         /* Hiệu ứng bóng ma (Ghost) khi kéo thả học sinh */
@@ -331,6 +332,32 @@
             .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
             .year-badge, .class-badge { width: 100%; justify-content: space-between;}
         }
+        /* ================= CSS TASK BOARD & TIMELINE ================= */
+        .task-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1rem; }
+        .task-card { border-left: 4px solid var(--primary); cursor: pointer; display: flex; flex-direction: column; height: 100%; transition: 0.3s; }
+        .task-card:hover { transform: translateY(-5px); box-shadow: 0 10px 25px rgba(0,0,0,0.1) !important; }
+        .task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 0.5rem; }
+        .task-title { font-size: 1.1rem; font-weight: 700; color: var(--text-main); margin-bottom: 5px; }
+        .task-meta { font-size: 0.8rem; color: var(--text-muted); display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+        
+        .status-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; }
+        .status-todo { background: #f1f5f9; color: #475569; border: 1px solid #cbd5e1; }
+        .status-pending { background: #fef3c7; color: #d97706; border: 1px solid #fcd34d; animation: pulse 2s infinite; }
+        .status-approved { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+        .status-rejected { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+        /* Timeline Dọc */
+        .timeline { position: relative; border-left: 2px solid #e2e8f0; padding-left: 1.5rem; margin-left: 10px; margin-top: 1.5rem; }
+        .timeline-item { position: relative; margin-bottom: 1.5rem; }
+        .timeline-dot { position: absolute; left: -1.9rem; top: 0; width: 14px; height: 14px; border-radius: 50%; background: white; border: 3px solid var(--primary); }
+        .timeline-time { font-size: 0.75rem; color: var(--text-muted); font-weight: 600; }
+        .timeline-content { background: #f8fafc; padding: 10px 15px; border-radius: var(--radius-md); border: 1px solid var(--border); margin-top: 5px; font-size: 0.9rem; }
+        .timeline-content.rejected { border-color: var(--danger); background: #fef2f2; }
+        .timeline-content.approved { border-color: var(--success); background: #f0fdf4; }
+
+        /* Dropzone Upload */
+        .task-dropzone { border: 2px dashed #cbd5e1; border-radius: var(--radius-md); padding: 2rem; text-align: center; background: rgba(255,255,255,0.5); transition: 0.3s; cursor: pointer; margin-top: 1rem; }
+        .task-dropzone:hover { border-color: var(--primary); background: rgba(59, 130, 246, 0.05); }
     </style>
 </head>
 <body>
@@ -472,6 +499,7 @@
             <div class="nav-item" data-tab="attendance" onclick="switchTab('attendance', this)"><i class="fa-solid fa-clipboard-user"></i> Sổ Điểm Danh</div>
             <div class="nav-item" data-tab="academic" onclick="switchTab('academic', this)"><i class="fa-solid fa-table"></i> Sổ Điểm Học Bạ</div>
             <div class="nav-item" data-tab="behavior" onclick="switchTab('behavior', this)"><i class="fa-solid fa-sitemap"></i> Đội Nhóm & Thi Đua</div>
+            <div class="nav-item" data-tab="tasks" onclick="switchTab('tasks', this)" style="border-left: 3px solid var(--success);"><i class="fa-solid fa-list-check"></i> Quản Lý Công Việc</div>
             
             <div class="nav-item" data-tab="wheel" onclick="switchTab('wheel', this)" style="border-left: 3px solid var(--accent); background: rgba(202, 138, 4, 0.1); color: #fde047; font-weight: 600;"><i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 10s;"></i> Vòng Quay May Mắn</div>
             
@@ -681,6 +709,105 @@
                 <div class="page-header"><div><h1>Đội Nhóm & Thi Đua</h1><p>Ưu tiên xếp Tổ trưởng -> Tổ phó lên đầu để dễ quản lý.</p></div></div>
                 <div id="sysNoticeThiDua" style="padding: 1rem 1.5rem; background: #fefce8; color: #854d0e; border-radius: var(--radius-md); margin-bottom: 1.5rem; display: none; border: 1px solid #fef08a;"><i class="fa-solid fa-lock" style="margin-right: 0.5rem;"></i> <strong>Chế độ Cố định:</strong> Quyền của bạn không được phép chấm điểm thi đua.</div>
                 <div class="teams-grid" id="gradingGrid"></div>
+            </div>
+
+            <!-- TASK BOARD TAB -->
+            <div id="tab-tasks" class="tab-content">
+                <div class="page-header">
+                    <div>
+                        <h1>Quản Lý Tiến Độ & Deadline</h1>
+                        <p>Hệ thống giao việc, nộp minh chứng và phê duyệt thời gian thực.</p>
+                    </div>
+                    <button class="btn-action" style="background: var(--success);" onclick="openCreateTaskModal()" id="btnCreateTask" style="display:none;">
+                        <i class="fa-solid fa-plus"></i> Giao Việc Mới
+                    </button>
+                </div>
+                
+                <!-- Bảng chứa danh sách Task -->
+                <div class="task-grid" id="taskBoardGrid">
+                    <!-- JS sẽ đổ dữ liệu vào đây -->
+                </div>
+            </div>
+
+            <!-- MODAL CHI TIẾT CÔNG VIỆC & NỘP BÀI -->
+            <div class="overlay-bg" id="taskDetailModal" style="display: none; z-index: 10006;">
+                <div class="auth-box" style="max-width: 800px; width: 95%; max-height: 90vh; overflow-y: auto; padding: 2rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); padding-bottom: 1rem;">
+                        <div>
+                            <h2 id="tdTitle" style="text-align: left; font-size: 1.6rem; margin-bottom: 10px;">Tên Công Việc</h2>
+                            <div class="task-meta">
+                                <span id="tdStatus"></span>
+                                <span><i class="fa-regular fa-clock"></i> Hạn chót: <b id="tdDeadline" style="color: var(--danger);"></b></span>
+                            </div>
+                        </div>
+                        <button class="close-btn" onclick="document.getElementById('taskDetailModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
+                        <!-- Cột trái: Form nộp bài & Duyệt -->
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 10px;"><i class="fa-solid fa-file-arrow-up"></i> Khu Vực Nộp Bài</h3>
+                            <p id="tdDesc" style="font-size: 0.95rem; color: var(--text-muted); background: #f8fafc; padding: 10px; border-radius: 8px; margin-bottom: 15px;"></p>
+                            
+                            <!-- Dành cho User nộp bài -->
+                            <div id="submissionZone">
+                                <div class="form-group">
+                                    <label>Dán Link (Google Drive, Canva, Docs...)</label>
+                                    <input type="text" id="taskLinkInput" placeholder="https://...">
+                                </div>
+                                <div style="text-align: center; font-weight: bold; color: var(--text-muted); margin: 10px 0;">HOẶC</div>
+                                <div class="file-upload-wrapper">
+                                    <input type="file" id="taskFileInput">
+                                    <div class="file-upload-btn"><i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 5px;"></i><br>Chọn File Upload</div>
+                                </div>
+                                <button class="btn-primary" style="width: 100%; margin-top: 15px;" onclick="submitTaskProof()"><i class="fa-solid fa-paper-plane"></i> Gửi Minh Chứng</button>
+                            </div>
+
+                            <!-- Dành cho Admin / Lead duyệt bài -->
+                            <div id="approvalZone" style="display: none; background: #fefce8; border: 1px solid #fef08a; padding: 15px; border-radius: 8px; margin-top: 15px;">
+                                <h4 style="color: #b45309; margin-bottom: 10px;"><i class="fa-solid fa-gavel"></i> Phê Duyệt Nhiệm Vụ</h4>
+                                <textarea id="taskFeedback" class="excel-input" style="text-align: left; height: 80px; margin-bottom: 10px;" placeholder="Nhập nhận xét/yêu cầu sửa đổi (nếu có)..."></textarea>
+                                <div style="display: flex; gap: 10px;">
+                                    <button class="btn-save" style="flex: 1;" onclick="reviewTask('approved')"><i class="fa-solid fa-check"></i> Duyệt Đạt</button>
+                                    <button class="btn-reject" style="flex: 1;" onclick="reviewTask('rejected')"><i class="fa-solid fa-rotate-left"></i> Yêu cầu sửa</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Cột phải: Lịch sử (Timeline) -->
+                        <div>
+                            <h3 style="font-size: 1.1rem; margin-bottom: 10px;"><i class="fa-solid fa-clock-rotate-left"></i> Nhật Ký Hoạt Động</h3>
+                            <div class="timeline" id="tdTimeline">
+                                <!-- JS sẽ render các chấm timeline vào đây -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- MODAL TẠO CÔNG VIỆC MỚI -->
+            <div class="overlay-bg" id="createTaskModal" style="display: none; z-index: 10006;">
+                <div class="auth-box" style="max-width: 500px; width: 95%;">
+                    <h2>Tạo Nhiệm Vụ Mới</h2>
+                    <form onsubmit="event.preventDefault(); submitNewTask();">
+                        <div class="form-group">
+                            <label>Tên nhiệm vụ</label>
+                            <input type="text" id="ctTitle" required placeholder="VD: Nộp kịch bản sự kiện">
+                        </div>
+                        <div class="form-group">
+                            <label>Mô tả chi tiết</label>
+                            <textarea id="ctDesc" style="height: 80px;" placeholder="Yêu cầu cụ thể..."></textarea>
+                        </div>
+                        <div class="form-group">
+                            <label>Hạn chót (Deadline)</label>
+                            <input type="datetime-local" id="ctDeadline" required>
+                        </div>
+                        <div style="display: flex; gap: 10px; margin-top: 20px;">
+                            <button type="button" class="btn-outline" style="flex: 1;" onclick="document.getElementById('createTaskModal').style.display='none'">Hủy</button>
+                            <button type="submit" class="btn-primary" style="flex: 2;"><i class="fa-solid fa-plus"></i> Tạo Công Việc</button>
+                        </div>
+                    </form>
+                </div>
             </div>
 
             <!-- TAB MỚI: VÒNG QUAY MAY MẮN -->
@@ -3296,6 +3423,250 @@
             renderGLVProfiles();
             if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
             showToast("Đã xóa tài khoản thành công!", "success");
+        }
+        // ================= HỆ THỐNG TASK & TIẾN ĐỘ =================
+        let classTasks = [];
+        let currentOpenTaskId = null;
+
+        // Bổ sung storage
+        let storage = null;
+        if (typeof firebase !== 'undefined') {
+            try { storage = firebase.storage(); } catch (e) { console.log("Firebase Storage Init Error", e); }
+        }
+
+        // Lắng nghe dữ liệu Task Realtime
+        function listenToTasks() {
+            if(!isCloudConnected || !db) return;
+            let taskPath = `tasks/${activeYear}/${currentViewClass}`;
+            db.ref(taskPath).on('value', (snapshot) => {
+                classTasks = [];
+                if(snapshot.exists()) {
+                    let data = snapshot.val();
+                    for(let key in data) classTasks.push(data[key]);
+                }
+                // Sắp xếp task mới nhất lên đầu
+                classTasks.sort((a, b) => b.id - a.id);
+                if(document.getElementById('tab-tasks').classList.contains('active')) renderTaskBoard();
+            });
+        }
+
+        // Cập nhật hàm switchTab cũ (thêm dòng kích hoạt render task)
+        const oldSwitchTab = switchTab;
+        switchTab = function(tabId, el) {
+            oldSwitchTab(tabId, el);
+            if(tabId === 'tasks') {
+                listenToTasks(); // Bắt đầu lắng nghe khi mở tab
+                renderTaskBoard();
+            }
+        };
+
+        function renderTaskBoard() {
+            const grid = document.getElementById('taskBoardGrid');
+            grid.innerHTML = '';
+            
+            // Phân quyền nút tạo task
+            if (currentUser.role === 'admin' || currentUser.role === 'lead') {
+                document.getElementById('btnCreateTask').style.display = 'inline-flex';
+            } else {
+                document.getElementById('btnCreateTask').style.display = 'none';
+            }
+
+            if(classTasks.length === 0) {
+                grid.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">Chưa có công việc nào được giao cho lớp này.</div>`;
+                return;
+            }
+
+            classTasks.forEach(task => {
+                let badgeClass = 'status-todo'; let badgeText = 'Chờ nộp';
+                if(task.status === 'pending') { badgeClass = 'status-pending'; badgeText = 'Đang chờ duyệt'; }
+                if(task.status === 'approved') { badgeClass = 'status-approved'; badgeText = 'Đã hoàn thành'; }
+                if(task.status === 'rejected') { badgeClass = 'status-rejected'; badgeText = 'Cần sửa lại'; }
+
+                // Tính toán deadline
+                let dlDate = new Date(task.deadline);
+                let now = new Date();
+                let timeDiff = dlDate - now;
+                let dlColor = 'var(--text-muted)';
+                if (task.status !== 'approved') {
+                    if (timeDiff < 0) dlColor = 'var(--danger)'; // Quá hạn
+                    else if (timeDiff < 86400000) dlColor = 'var(--warning)'; // Còn dưới 24h
+                }
+
+                grid.innerHTML += `
+                <div class="card task-card" onclick="openTaskDetail(${task.id})">
+                    <div class="card-body">
+                        <div class="task-header">
+                            <span class="status-badge ${badgeClass}">${badgeText}</span>
+                            <span style="color: ${dlColor}; font-size: 0.85rem; font-weight: 600;"><i class="fa-regular fa-clock"></i> ${dlDate.toLocaleDateString('vi-VN')}</span>
+                        </div>
+                        <h3 class="task-title">${esc(task.title)}</h3>
+                        <p style="font-size: 0.85rem; color: var(--text-muted); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${esc(task.desc)}</p>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function openCreateTaskModal() {
+            document.getElementById('ctTitle').value = '';
+            document.getElementById('ctDesc').value = '';
+            document.getElementById('ctDeadline').value = '';
+            document.getElementById('createTaskModal').style.display = 'flex';
+        }
+
+        function submitNewTask() {
+            let task = {
+                id: Date.now(),
+                title: document.getElementById('ctTitle').value.trim(),
+                desc: document.getElementById('ctDesc').value.trim(),
+                deadline: document.getElementById('ctDeadline').value,
+                status: 'todo', // todo, pending, approved, rejected
+                creator: currentUser.username,
+                history: [{
+                    time: new Date().toLocaleString('vi-VN'),
+                    action: 'created',
+                    actor: currentUser.username,
+                    detail: 'Đã khởi tạo công việc'
+                }]
+            };
+
+            db.ref(`tasks/${activeYear}/${currentViewClass}/${task.id}`).set(task)
+                .then(() => {
+                    showToast("Giao việc thành công!", "success");
+                    document.getElementById('createTaskModal').style.display = 'none';
+                }).catch(e => showToast("Lỗi: " + e.message, "error"));
+        }
+
+        function openTaskDetail(taskId) {
+            let task = classTasks.find(t => t.id === taskId);
+            if(!task) return;
+            currentOpenTaskId = taskId;
+
+            document.getElementById('tdTitle').innerText = task.title;
+            document.getElementById('tdDesc').innerText = task.desc;
+            document.getElementById('tdDeadline').innerText = new Date(task.deadline).toLocaleString('vi-VN');
+            
+            // Set Status Badge
+            let statusHtml = '';
+            if(task.status === 'todo') statusHtml = `<span class="status-badge status-todo">Chờ nộp</span>`;
+            if(task.status === 'pending') statusHtml = `<span class="status-badge status-pending">Đang chờ duyệt</span>`;
+            if(task.status === 'approved') statusHtml = `<span class="status-badge status-approved">Hoàn thành</span>`;
+            if(task.status === 'rejected') statusHtml = `<span class="status-badge status-rejected">Cần sửa lại</span>`;
+            document.getElementById('tdStatus').innerHTML = statusHtml;
+
+            // Render Timeline
+            let tlHtml = '';
+            let dotColor = { 'created': '#94a3b8', 'submitted': '#3b82f6', 'approved': '#22c55e', 'rejected': '#ef4444' };
+            task.history.forEach(h => {
+                let contentClass = h.action === 'rejected' ? 'rejected' : (h.action === 'approved' ? 'approved' : '');
+                let linkHtml = h.link ? `<br><a href="${h.link}" target="_blank" style="color:var(--primary); font-weight:bold;"><i class="fa-solid fa-paperclip"></i> Mở file đính kèm</a>` : '';
+                
+                tlHtml += `
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="border-color: ${dotColor[h.action] || '#3b82f6'};"></div>
+                    <div class="timeline-time">${h.time} - Bởi <b>${h.actor}</b></div>
+                    <div class="timeline-content ${contentClass}">
+                        ${esc(h.detail)}
+                        ${linkHtml}
+                    </div>
+                </div>`;
+            });
+            document.getElementById('tdTimeline').innerHTML = tlHtml;
+
+            // Xử lý phân quyền hiển thị Zone Nộp bài / Zone Duyệt bài
+            let canSubmit = (task.status === 'todo' || task.status === 'rejected') && (currentUser.role !== 'admin');
+            let canApprove = (task.status === 'pending') && (currentUser.role === 'admin' || currentUser.role === 'lead');
+
+            document.getElementById('submissionZone').style.display = canSubmit ? 'block' : 'none';
+            document.getElementById('approvalZone').style.display = canApprove ? 'block' : 'none';
+
+            // Reset input
+            document.getElementById('taskLinkInput').value = '';
+            document.getElementById('taskFileInput').value = '';
+            document.getElementById('taskFeedback').value = '';
+
+            document.getElementById('taskDetailModal').style.display = 'flex';
+        }
+
+        async function submitTaskProof() {
+            let link = document.getElementById('taskLinkInput').value.trim();
+            let fileInput = document.getElementById('taskFileInput');
+            let file = fileInput.files[0];
+
+            if (!link && !file) return showToast("Vui lòng dán link hoặc chọn file minh chứng!", "warning");
+
+            const submitBtn = event.target;
+            submitBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang gửi...';
+            submitBtn.disabled = true;
+
+            try {
+                let finalLink = link;
+                let fileName = file ? file.name : "Link đính kèm";
+
+                // Nếu có file -> Upload lên Firebase Storage
+                if (file) {
+                    if(!storage) throw new Error("Firebase Storage chưa được khởi tạo!");
+                    let storageRef = storage.ref(`proofs/${activeYear}/${currentViewClass}/${Date.now()}_${file.name}`);
+                    let snapshot = await storageRef.put(file);
+                    finalLink = await snapshot.ref.getDownloadURL();
+                }
+
+                // Cập nhật Database
+                let taskPath = `tasks/${activeYear}/${currentViewClass}/${currentOpenTaskId}`;
+                let task = classTasks.find(t => t.id === currentOpenTaskId);
+                
+                task.status = 'pending';
+                task.history.push({
+                    time: new Date().toLocaleString('vi-VN'),
+                    action: 'submitted',
+                    actor: currentUser.username,
+                    detail: `Đã nộp minh chứng: ${fileName}`,
+                    link: finalLink
+                });
+
+                await db.ref(taskPath).set(task);
+                showToast("Nộp minh chứng thành công!", "success");
+                openTaskDetail(currentOpenTaskId); // Refresh modal
+
+            } catch (err) {
+                showToast("Lỗi khi nộp bài: " + err.message, "error");
+            } finally {
+                submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi Minh Chứng';
+                submitBtn.disabled = false;
+            }
+        }
+
+        function reviewTask(action) {
+            let feedback = document.getElementById('taskFeedback').value.trim();
+            if (action === 'rejected' && !feedback) return showToast("Vui lòng ghi rõ lý do yêu cầu sửa đổi!", "warning");
+
+            let taskPath = `tasks/${activeYear}/${currentViewClass}/${currentOpenTaskId}`;
+            let task = classTasks.find(t => t.id === currentOpenTaskId);
+            
+            task.status = action;
+            let actionText = action === 'approved' ? 'Đã duyệt đạt' : 'Yêu cầu sửa lại';
+            
+            task.history.push({
+                time: new Date().toLocaleString('vi-VN'),
+                action: action,
+                actor: currentUser.username,
+                detail: feedback ? `${actionText}. Nhận xét: ${feedback}` : actionText
+            });
+
+            // Tích hợp Gamification: Thưởng/Trừ điểm tự động (Tùy chọn)
+            if(action === 'approved') {
+                let dlDate = new Date(task.deadline);
+                if(new Date() <= dlDate) {
+                    // Cộng điểm nếu nộp đúng hạn
+                    showToast("Đã duyệt! Task hoàn thành đúng hạn.", "success");
+                } else {
+                    showToast("Đã duyệt! Task hoàn thành trễ hạn.", "warning");
+                }
+            }
+
+            db.ref(taskPath).set(task).then(() => {
+                if(action === 'rejected') showToast("Đã trả hồ sơ yêu cầu sửa lại.", "info");
+                openTaskDetail(currentOpenTaskId);
+            });
         }
     </script>
 </body>
