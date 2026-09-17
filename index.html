@@ -3622,39 +3622,34 @@
                 showToast("Đã phát hành thành công!", "success");
                 document.getElementById('createTaskModal').style.display = 'none';
                 
-                // KIỂM TRA LOGIC NGÀNH/BAN ĐỂ QUYẾT ĐỊNH CÓ RUNG CHUÔNG CHO CHÍNH MÌNH KHÔNG
-                let myNganhFromClass = (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
-                let myNganhFromDuty = (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) ? "Ngành " + currentUser.nhiemVu.split("ngành ")[1] : "";
-                
-                let inScope = false;
-                if (scopes.includes('ALL') || 
-                    (currentUser.chidoan && scopes.includes(currentUser.chidoan)) || 
-                    (currentUser.banTruc && scopes.includes(currentUser.banTruc)) || 
-                    (myNganhFromClass && scopes.includes(myNganhFromClass)) || 
-                    (myNganhFromDuty && scopes.includes(myNganhFromDuty))) {
-                    inScope = true;
-                }
-
-                // CHỈ BÁO CHUÔNG NẾU CHÍNH BẢN THÂN CŨNG PHẢI LÀM NHIỆM VỤ NÀY
-                if (inScope) {
-                    createNotification(task);
-                }
+                // Lệnh gọi Chuông đã bị xóa ở đây. 
+                // Nhiệm vụ rung chuông sẽ được giao cho Firebase lo liệu (để rung đồng loạt trên mọi thiết bị hợp lệ).
             });
         }
+        function listenToTasks() {
+            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới, đâu là thông báo cũ
+        window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
             if(!isCloudConnected || !db) return;
             db.ref(`tasks/${activeYear}/global_tasks`).on('value', (snapshot) => {
                 globalTasks = [];
+                let isFirstLoad = (window.lastMaxTaskId === 0);
+                let currentMax = window.lastMaxTaskId;
+
                 if(snapshot.exists()) {
                     let data = snapshot.val();
                     
+                    // Logic nhận diện thông minh (VD: Trưởng ngành Thiếu -> Thuộc Ngành Thiếu)
                     let myNganhFromClass = (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
                     let myNganhFromDuty = (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) ? "Ngành " + currentUser.nhiemVu.split("ngành ")[1] : "";
 
                     for(let key in data) {
                         let t = data[key];
                         
+                        if (t.id > currentMax) currentMax = t.id;
+                        
+                        // Kiểm tra xem User có nằm trong phạm vi (Scope) không
                         let inScope = false;
                         if (t.scopes.includes('ALL') || 
                             (currentUser.chidoan && t.scopes.includes(currentUser.chidoan)) || 
@@ -3664,18 +3659,25 @@
                             inScope = true;
                         }
 
-                        // Nếu trong phạm vi nhận việc -> Hiển thị bình thường
+                        // --- ĐIỀU KIỆN RUNG CHUÔNG THẬT ---
+                        // Chỉ reo chuông khi: Không phải lần F5 đầu tiên + Có task mới sinh ra + Mình nằm trong danh sách nhận (inScope)
+                        if (!isFirstLoad && t.id > window.lastMaxTaskId && inScope) {
+                            createNotification(t);
+                        }
+
+                        // --- ĐIỀU KIỆN HIỂN THỊ RA MÀN HÌNH ---
                         if (inScope) {
-                            t.isMyDuty = true;
+                            t.isMyDuty = true; // Việc của mình
                             globalTasks.push(t);
-                        } 
-                        // Nếu KHÔNG trong phạm vi nhận việc NHƯNG là người phát hành ra nó -> Hiển thị để xóa/quản lý
-                        else if (t.creator === currentUser.username) {
-                            t.isMyDuty = false;
+                        } else if (t.creator === currentUser.username) {
+                            t.isMyDuty = false; // Việc mình tạo ra để theo dõi (và để có Nút Xóa)
                             globalTasks.push(t);
                         }
                     }
                 }
+                
+                window.lastMaxTaskId = currentMax || Date.now();
+                
                 globalTasks.sort((a, b) => b.id - a.id);
                 if(document.getElementById('tab-tasks').classList.contains('active')) renderTaskBoard();
                 if(document.getElementById('tab-reminders').classList.contains('active')) renderReminderBoard();
