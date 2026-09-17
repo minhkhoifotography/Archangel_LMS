@@ -3624,27 +3624,97 @@
         }
         // 2. Logic Lưu & Phân loại Nhiệm vụ
         function submitNewTask() {
-            let type = document.querySelector('input[name="taskType"]:checked').value;
-            let scopes = document.getElementById('scopeAll').checked ? ['ALL'] : Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
-            if (scopes.length === 0) return showToast("Vui lòng chọn ít nhất 1 phạm vi áp dụng!", "warning");
+    let type = document.querySelector('input[name="taskType"]:checked').value;
+    let scopes = document.getElementById('scopeAll').checked ? ['ALL'] : Array.from(document.querySelectorAll('.scope-cb:checked')).map(cb => cb.value);
+    if (scopes.length === 0) return showToast("Vui lòng chọn ít nhất 1 phạm vi áp dụng!", "warning");
 
-            let task = {
-                id: Date.now(), type: type, title: document.getElementById('ctTitle').value.trim(), desc: document.getElementById('ctDesc').value.trim(),
-                assigner: document.getElementById('ctAssigner').value, scopes: scopes, creator: currentUser.username,
-                history: [{ time: new Date().toLocaleString('vi-VN'), action: 'created', actor: currentUser.username, detail: 'Đã khởi tạo' }]
-            };
+    let titleText = document.getElementById('ctTitle').value.trim();
+    let descText = document.getElementById('ctDesc').value.trim();
+    let assigner = document.getElementById('ctAssigner').value;
+    
+    let task = {
+        id: Date.now(), type: type, title: titleText, desc: descText,
+        assigner: assigner, scopes: scopes, creator: currentUser.username,
+        history: [{ time: new Date().toLocaleString('vi-VN'), action: 'created', actor: currentUser.username, detail: 'Đã khởi tạo' }]
+    };
 
-            if (type === 'task') { task.deadline = document.getElementById('ctDeadline').value; task.status = 'todo'; } 
-            else { task.startDate = document.getElementById('ctStartDate').value; task.endDate = document.getElementById('ctEndDate').value; task.status = 'active'; }
+    if (type === 'task') { 
+        task.deadline = document.getElementById('ctDeadline').value; 
+        task.status = 'todo'; 
+    } else { 
+        task.startDate = document.getElementById('ctStartDate').value; 
+        task.endDate = document.getElementById('ctEndDate').value; 
+        task.status = 'active'; 
+    }
 
-            db.ref(`tasks/${activeYear}/global_tasks/${task.id}`).set(task).then(() => {
-                showToast("Đã phát hành thành công!", "success");
-                document.getElementById('createTaskModal').style.display = 'none';
-            });
+    db.ref(`tasks/${activeYear}/global_tasks/${task.id}`).set(task).then(() => {
+        showToast("Đã phát hành thành công!", "success");
+        document.getElementById('createTaskModal').style.display = 'none';
+
+        // ================= KÍCH HOẠT GỬI EMAIL THÔNG BÁO =================
+        // 1. Lọc danh sách email những người thuộc phạm vi
+        let targetEmails = [];
+        globalUsers.forEach(u => {
+            // Loại bỏ Admin tối cao hoặc người vừa đăng bài (không tự gửi cho mình)
+            if (u.username === 'admin' || u.username === currentUser.username) return; 
+
+            // Logic nhận diện phạm vi y như hàm listenToTasks
+            let myNganhFromClass = (u.chidoan && u.chidoan !== "Chưa phân công" && u.chidoan !== "Hệ Thống Admin") ? "Ngành " + u.chidoan.split(' ')[0] : "";
+            let myNganhFromDuty = (u.nhiemVu && u.nhiemVu.includes("ngành")) ? "Ngành " + u.nhiemVu.split("ngành ")[1] : "";
+
+            let inScope = false;
+            if (scopes.includes('ALL') || 
+                (u.chidoan && scopes.includes(u.chidoan)) || 
+                (u.banTruc && scopes.includes(u.banTruc)) || 
+                (myNganhFromClass && scopes.includes(myNganhFromClass)) || 
+                (myNganhFromDuty && scopes.includes(myNganhFromDuty))) {
+                inScope = true;
+            }
+
+            // Nếu người này nằm trong phạm vi và có khai báo email
+            if (inScope && u.profile && u.profile.email && u.profile.email.includes("@")) {
+                targetEmails.push(u.profile.email.trim());
+            }
+        });
+
+        // 2. Gửi API nếu có ít nhất 1 email
+        if (targetEmails.length > 0) {
+            let emailString = targetEmails.join(",");
+            let mailSubject = `[LMS] ${type === 'task' ? 'Nhiệm vụ mới' : 'Nhắc việc mới'}: ${titleText}`;
+            let mailBody = `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #e2e8f0; border-radius: 8px;">
+                    <h2 style="color: #0033cc;">Thông báo hệ thống Corpus Christi LMS</h2>
+                    <p>Chào bạn,</p>
+                    <p>Bạn vừa nhận được một <b>${type === 'task' ? 'Yêu cầu nộp bài' : 'Nhắc nhở'}</b> mới từ <b>${assigner}</b>.</p>
+                    <div style="background: #f8fafc; padding: 15px; border-left: 4px solid #3b82f6; margin: 15px 0;">
+                        <h3 style="margin-top: 0; color: #1e293b;">${titleText}</h3>
+                        <p style="color: #475569; white-space: pre-wrap;">${descText}</p>
+                        ${type === 'task' ? `<p style="color: #dc2626; font-weight: bold;">Hạn chót: ${new Date(task.deadline).toLocaleString('vi-VN')}</p>` : ''}
+                    </div>
+                    <p>Vui lòng đăng nhập vào hệ thống LMS để xem chi tiết và xử lý.</p>
+                    <p style="font-size: 12px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 10px; margin-top: 20px;">Đây là email tự động, vui lòng không trả lời thư này.</p>
+                </div>
+            `;
+
+            // THAY THẾ LINK NÀY BẰNG LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN
+            const GAS_URL = "https://script.google.com/macros/s/AKfycbyudGyaUdTbyXUa6uk63IYL-fuh6oD0fwVoe5diTiA3QrcDSOUqpKZfvXbdCCkqtjUq/exec";
+
+            fetch(GAS_URL, {
+                method: "POST",
+                body: JSON.stringify({
+                    toEmails: emailString,
+                    subject: mailSubject,
+                    body: mailBody
+                })
+            }).then(response => response.json())
+              .then(res => { console.log("Gửi email thành công:", res); })
+              .catch(err => { console.error("Lỗi gửi email:", err); });
         }
-
-        // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới
-        window.lastMaxTaskId = window.lastMaxTaskId || 0;
+        // ================= KẾT THÚC KHỐI GỬI EMAIL =================
+    }).catch(e => {
+        showToast("Lỗi hệ thống: " + e.message, "error");
+    });
+}
 
         function listenToTasks() {
             if(!isCloudConnected || !db) return;
