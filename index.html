@@ -1366,7 +1366,10 @@
         ];
 
         const DUTY_LIST = [
-            "Chưa phân công", "Ngành Chiên", "Ngành Ấu", "Ngành Thiếu", "Ngành Nghĩa", "Ngành Hiệp"
+            "Chưa phân công", "Xứ đoàn Trưởng", "Xứ đoàn phó", "Thư ký", "Thủ quỹ", 
+            "Trưởng ngành Chiên", "Trưởng ngành Ấu", "Trưởng ngành Thiếu", "Trưởng ngành Nghĩa", "Trưởng ngành Hiệp", 
+            "Phó ngành Chiên", "Phó ngành Ấu", "Phó ngành Thiếu", "Phó ngành Nghĩa", "Phó ngành Hiệp", 
+            "Thành viên ngành Chiên", "Thành viên ngành Ấu", "Thành viên ngành Thiếu", "Thành viên ngành Nghĩa", "Thành viên ngành Hiệp"
         ];
         
         const COMMITTEE_LIST = [
@@ -3572,10 +3575,16 @@
             if (scopeContainer) {
                 let html = `<div class="scope-group-title">Các Chi Đoàn (Lớp)</div>`;
                 CHI_DOAN_LIST.filter(c => c !== "Hệ Thống Admin").forEach(c => { html += `<div class="scope-item"><label><input type="checkbox" class="scope-cb" value="${c}"> ${c}</label></div>`; });
-                html += `<div class="scope-group-title">Theo Nhiệm Vụ (Ngành)</div>`;
-                DUTY_LIST.filter(d => d !== "Chưa phân công").forEach(d => { html += `<div class="scope-item"><label><input type="checkbox" class="scope-cb" value="${d}"> ${d}</label></div>`; });
+                
+                // MỚI: Chỉ liệt kê 5 Ngành
+                html += `<div class="scope-group-title">Theo Ngành</div>`;
+                const NGANH_LIST = ["Ngành Chiên", "Ngành Ấu", "Ngành Thiếu", "Ngành Nghĩa", "Ngành Hiệp"];
+                NGANH_LIST.forEach(n => { html += `<div class="scope-item"><label><input type="checkbox" class="scope-cb" value="${n}"> ${n}</label></div>`; });
+                
+                // MỚI: Đã xóa chữ "Ban" dư thừa bị lặp
                 html += `<div class="scope-group-title">Theo Ban Trực</div>`;
-                COMMITTEE_LIST.filter(b => b !== "Chưa phân công").forEach(b => { html += `<div class="scope-item"><label><input type="checkbox" class="scope-cb" value="${b}"> Ban ${b}</label></div>`; });
+                COMMITTEE_LIST.filter(b => b !== "Chưa phân công").forEach(b => { html += `<div class="scope-item"><label><input type="checkbox" class="scope-cb" value="${b}"> ${b}</label></div>`; });
+                
                 scopeContainer.innerHTML = html;
             }
         }
@@ -3622,9 +3631,21 @@
                 globalTasks = [];
                 if(snapshot.exists()) {
                     let data = snapshot.val();
+                    
+                    // Thuật toán bóc tách chữ đầu tiên của Chi Đoàn để xác định Ngành (VD: "Thiếu 3C" -> "Ngành Thiếu")
+                    let userNganh = currentUser.chidoan ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
+
                     for(let key in data) {
                         let t = data[key];
-                        if (t.scopes.includes('ALL') || t.scopes.includes(currentUser.chidoan) || t.scopes.includes(currentUser.nhiemVu) || t.scopes.includes(currentUser.banTruc) || t.creator === currentUser.username) {
+                        
+                        // Kiểm tra xem task này có nhắm vào user hiện tại không
+                        if (t.scopes.includes('ALL') || 
+                            t.scopes.includes(currentUser.chidoan) || 
+                            t.scopes.includes(currentUser.nhiemVu) || 
+                            t.scopes.includes(currentUser.banTruc) || 
+                            t.scopes.includes(userNganh) || 
+                            t.creator === currentUser.username) {
+                            
                             globalTasks.push(t);
                         }
                     }
