@@ -229,7 +229,8 @@
             cursor: pointer;
             color: var(--text-muted);
             font-size: 1.1rem;
-            z-index: 10;
+            z-index: 100; /* BẮT BUỘC TĂNG Z-INDEX LÊN 100 ĐỂ KHÔNG BỊ INPUT CHE KHUẤT */
+            pointer-events: auto; /* ÉP BUỘC NHẬN SỰ KIỆN CLICK */
             transition: color 0.2s;
         }
 
@@ -1201,8 +1202,29 @@
             setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 3000);
         }
         function togglePasswordVisibility(id) {
-            const input = document.getElementById(id); const icon = input.nextElementSibling;
-            if(input.type === 'password') { input.type = 'text'; icon.classList.remove('fa-eye'); icon.classList.add('fa-eye-slash'); } else { input.type = 'password'; icon.classList.remove('fa-eye-slash'); icon.classList.add('fa-eye'); }
+            const input = document.getElementById(id);
+            if (!input) return;
+            
+            // Tìm icon đang được click để thay đổi (ẩn/hiện)
+            const icon = input.parentElement.querySelector('.toggle-pw');
+            
+            // Dùng getAttribute & setAttribute sẽ an toàn và tương thích với mọi trình duyệt hơn
+            if (input.getAttribute('type') === 'password') { 
+                input.setAttribute('type', 'text'); 
+                if (icon) {
+                    icon.classList.remove('fa-eye'); 
+                    icon.classList.add('fa-eye-slash');
+                }
+            } else { 
+                input.setAttribute('type', 'password'); 
+                if (icon) {
+                    icon.classList.remove('fa-eye-slash'); 
+                    icon.classList.add('fa-eye');
+                }
+            }
+            
+            // Tự động focus lại vào ô nhập liệu để user có thể gõ tiếp ngay lập tức
+            input.focus();
         }
         function toggleAuthForm() {
             const loginBox = document.getElementById('loginFormBox'); const regBox = document.getElementById('registerFormBox');
