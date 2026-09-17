@@ -3626,11 +3626,12 @@
                 // Nhiệm vụ rung chuông sẽ được giao cho Firebase lo liệu (để rung đồng loạt trên mọi thiết bị hợp lệ).
             });
         }
-        function listenToTasks() {
-            // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới, đâu là thông báo cũ
+        // Khởi tạo bộ nhớ ảo để hệ thống biết đâu là thông báo mới, đâu là thông báo cũ
         window.lastMaxTaskId = window.lastMaxTaskId || 0;
 
         function listenToTasks() {
+            if(!isCloudConnected || !db) return;
+            db.ref(`tasks/${activeYear}/global_tasks`).on('value', (snapshot) => {
             if(!isCloudConnected || !db) return;
             db.ref(`tasks/${activeYear}/global_tasks`).on('value', (snapshot) => {
                 globalTasks = [];
