@@ -3621,7 +3621,24 @@
             db.ref(`tasks/${activeYear}/global_tasks/${task.id}`).set(task).then(() => {
                 showToast("Đã phát hành thành công!", "success");
                 document.getElementById('createTaskModal').style.display = 'none';
-                createNotification(task);
+                
+                // KIỂM TRA LOGIC NGÀNH/BAN ĐỂ QUYẾT ĐỊNH CÓ RUNG CHUÔNG CHO CHÍNH MÌNH KHÔNG
+                let myNganhFromClass = (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
+                let myNganhFromDuty = (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) ? "Ngành " + currentUser.nhiemVu.split("ngành ")[1] : "";
+                
+                let inScope = false;
+                if (scopes.includes('ALL') || 
+                    (currentUser.chidoan && scopes.includes(currentUser.chidoan)) || 
+                    (currentUser.banTruc && scopes.includes(currentUser.banTruc)) || 
+                    (myNganhFromClass && scopes.includes(myNganhFromClass)) || 
+                    (myNganhFromDuty && scopes.includes(myNganhFromDuty))) {
+                    inScope = true;
+                }
+
+                // CHỈ BÁO CHUÔNG NẾU CHÍNH BẢN THÂN CŨNG PHẢI LÀM NHIỆM VỤ NÀY
+                if (inScope) {
+                    createNotification(task);
+                }
             });
         }
 
@@ -3632,29 +3649,29 @@
                 if(snapshot.exists()) {
                     let data = snapshot.val();
                     
-                    // 1. Xác định Ngành dựa trên Lớp đang dạy (VD: Thiếu 3C -> Ngành Thiếu)
-                    let myNganhFromClass = "";
-                    if (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") {
-                        myNganhFromClass = "Ngành " + currentUser.chidoan.split(' ')[0];
-                    }
-                    
-                    // 2. Xác định Ngành dựa trên Chức vụ (VD: Trưởng ngành Ấu -> Ngành Ấu)
-                    let myNganhFromDuty = "";
-                    if (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) {
-                        myNganhFromDuty = "Ngành " + currentUser.nhiemVu.split("ngành ")[1];
-                    }
+                    let myNganhFromClass = (currentUser.chidoan && currentUser.chidoan !== "Chưa phân công" && currentUser.chidoan !== "Hệ Thống Admin") ? "Ngành " + currentUser.chidoan.split(' ')[0] : "";
+                    let myNganhFromDuty = (currentUser.nhiemVu && currentUser.nhiemVu.includes("ngành")) ? "Ngành " + currentUser.nhiemVu.split("ngành ")[1] : "";
 
                     for(let key in data) {
                         let t = data[key];
                         
-                        // Lọc siêu chuẩn xác: Có tên trong bất kỳ tiêu chí nào (Ban, Lớp, Ngành) HOẶC là người tự tạo thì mới thấy
+                        let inScope = false;
                         if (t.scopes.includes('ALL') || 
                             (currentUser.chidoan && t.scopes.includes(currentUser.chidoan)) || 
                             (currentUser.banTruc && t.scopes.includes(currentUser.banTruc)) || 
                             (myNganhFromClass && t.scopes.includes(myNganhFromClass)) || 
-                            (myNganhFromDuty && t.scopes.includes(myNganhFromDuty)) || 
-                            t.creator === currentUser.username) {
-                            
+                            (myNganhFromDuty && t.scopes.includes(myNganhFromDuty))) {
+                            inScope = true;
+                        }
+
+                        // Nếu trong phạm vi nhận việc -> Hiển thị bình thường
+                        if (inScope) {
+                            t.isMyDuty = true;
+                            globalTasks.push(t);
+                        } 
+                        // Nếu KHÔNG trong phạm vi nhận việc NHƯNG là người phát hành ra nó -> Hiển thị để xóa/quản lý
+                        else if (t.creator === currentUser.username) {
+                            t.isMyDuty = false;
                             globalTasks.push(t);
                         }
                     }
@@ -3664,7 +3681,7 @@
                 if(document.getElementById('tab-reminders').classList.contains('active')) renderReminderBoard();
             });
         }
-
+        
         function deleteTask(taskId) {
             if(!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa phát hành này? Toàn bộ dữ liệu minh chứng nộp kèm sẽ mất vĩnh viễn!")) return;
             
@@ -3685,11 +3702,15 @@
                 let badgeText = task.status === 'pending' ? 'Đang chờ duyệt' : (task.status === 'approved' ? 'Hoàn thành' : (task.status === 'rejected' ? 'Cần sửa lại' : 'Chờ nộp'));
                 let dlDate = new Date(task.deadline);
                 
-                // Nút xóa chỉ render nếu ID người tạo trùng với người đang đăng nhập
+                // NÚT XÓA: Chỉ dành cho người phát hành
                 let delBtn = task.creator === currentUser.username ? `<i class="fa-solid fa-trash-can" style="color: var(--danger); font-size: 1.1rem; padding: 5px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'" onclick="event.stopPropagation(); deleteTask(${task.id})" title="Xóa nhiệm vụ này"></i>` : '';
 
+                // NHẬN DIỆN VIỆC BẠN GIAO CHO NGƯỜI KHÁC
+                let opacityStyle = task.isMyDuty ? "1" : "0.65";
+                let dutyBadge = task.isMyDuty ? "" : `<span style="background: var(--text-muted); color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 10px;">VIỆC BẠN GIAO</span>`;
+
                 grid.innerHTML += `
-                <div class="card task-card" onclick="openTaskDetail(${task.id})">
+                <div class="card task-card" onclick="openTaskDetail(${task.id})" style="opacity: ${opacityStyle}; border-left-color: ${task.isMyDuty ? 'var(--primary)' : '#94a3b8'};">
                     <div class="card-body">
                         <div class="task-header">
                             <span class="status-badge ${badgeClass}">${badgeText}</span>
@@ -3698,7 +3719,7 @@
                                 ${delBtn}
                             </div>
                         </div>
-                        <h3 class="task-title">${esc(task.title)}</h3>
+                        <h3 class="task-title">${esc(task.title)} ${dutyBadge}</h3>
                         <div style="font-size: 0.8rem; color: var(--info); margin-bottom: 5px;"><i class="fa-solid fa-user-pen"></i> Giao bởi: ${esc(task.assigner)}</div>
                     </div>
                 </div>`;
@@ -3715,10 +3736,15 @@
                 if (now >= sDate && now <= eDate) {
                     activeCount++;
                     
+                    // NÚT XÓA: Chỉ dành cho người phát hành
                     let delBtn = rem.creator === currentUser.username ? `<i class="fa-solid fa-trash-can" style="color: #b45309; font-size: 1.1rem; padding: 5px; border-radius: 4px; transition: 0.2s;" onmouseover="this.style.background='#fde68a'" onmouseout="this.style.background='transparent'" onclick="event.stopPropagation(); deleteTask(${rem.id})" title="Xóa nhắc việc này"></i>` : '';
 
+                    // NHẬN DIỆN VIỆC BẠN GIAO CHO NGƯỜI KHÁC
+                    let opacityStyle = rem.isMyDuty ? "1" : "0.65";
+                    let dutyBadge = rem.isMyDuty ? "" : `<span style="background: #92400e; color: white; padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; margin-left: 10px;">BẠN PHÁT HÀNH</span>`;
+
                     grid.innerHTML += `
-                    <div class="card task-card" style="border-left-color: var(--warning); background: #fffbeb;">
+                    <div class="card task-card" style="border-left-color: var(--warning); background: #fffbeb; opacity: ${opacityStyle};">
                         <div class="card-body">
                             <div class="task-header">
                                 <span class="status-badge" style="background: var(--warning); color: white;"><i class="fa-solid fa-bullhorn"></i> ĐANG NHẮC</span>
@@ -3727,7 +3753,7 @@
                                     ${delBtn}
                                 </div>
                             </div>
-                            <h3 class="task-title" style="color: #b45309;">${esc(rem.title)}</h3>
+                            <h3 class="task-title" style="color: #b45309;">${esc(rem.title)} ${dutyBadge}</h3>
                             <p style="font-size: 0.85rem; color: #92400e;">${esc(rem.desc)}</p>
                             <div style="font-size: 0.8rem; color: var(--info); margin-top: 10px;"><i class="fa-solid fa-user-pen"></i> Đăng bởi: ${esc(rem.assigner)}</div>
                         </div>
@@ -3811,6 +3837,16 @@
 
             } catch (err) { showToast("Lỗi khi nộp: " + err.message, "error"); } 
             finally { submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Gửi Minh Chứng'; submitBtn.disabled = false; }
+        }
+
+        function deleteTask(taskId) {
+            if(!confirm("CẢNH BÁO: Bạn có chắc chắn muốn xóa phát hành này? Toàn bộ dữ liệu của tất cả mọi người liên quan sẽ mất vĩnh viễn!")) return;
+            
+            db.ref(`tasks/${activeYear}/global_tasks/${taskId}`).remove().then(() => {
+                showToast("Đã xóa phát hành thành công!", "success");
+            }).catch(err => {
+                showToast("Lỗi khi xóa: " + err.message, "error");
+            });
         }
 
         function reviewTask(action) {
