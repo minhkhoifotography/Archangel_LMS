@@ -1156,6 +1156,15 @@
                 let sYears = await fetchFromDB('system/years', ["2025-2026", "2026-2027"]);
                 systemYears = toArray(sYears); saveToDB('system/years', systemYears);
 
+                // --- ĐỒNG BỘ NĂM HỌC TOÀN HỆ THỐNG DO ADMIN SET ---
+                let globalDefaultYear = await fetchFromDB('system/defaultYear', null);
+                if (globalDefaultYear && systemYears.includes(globalDefaultYear)) {
+                    activeYear = globalDefaultYear;
+                    localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
+                    renderYearDropdowns();
+                }
+                // ----------------------------------------------------
+
                 const userIn = document.getElementById('loginUsername').value.trim(); const passIn = document.getElementById('loginPassword').value.trim();
                 
                 authDB = await fetchFromDB('auth', DEFAULT_AUTH);
@@ -1286,14 +1295,14 @@
             if (newYear === 'add_new_year') {
                 if (currentUser.role !== 'admin') {
                     showToast("Chỉ Super Admin mới được tạo năm học!", "error");
-                    document.getElementById('globalYearSelect').value = activeYear; // Trả lại năm hiện tại
+                    document.getElementById('globalYearSelect').value = activeYear; 
                     return;
                 }
                 
                 let yName = prompt("Bạn muốn tạo ra năm học mới này là năm học gì?\n(Ví dụ: 2026-2027)");
                 
                 if (!yName || yName.trim() === '') {
-                    document.getElementById('globalYearSelect').value = activeYear; // Hủy bỏ
+                    document.getElementById('globalYearSelect').value = activeYear; 
                     return;
                 }
                 
@@ -1304,35 +1313,56 @@
                     return;
                 }
                 
-                // Lưu năm học mới
                 systemYears.push(yName); 
                 saveToDB('system/years', systemYears); 
+                
+                // Khi tạo năm mới, mặc định áp dụng làm năm hiện tại cho toàn hệ thống
+                saveToDB('system/defaultYear', yName);
+
                 activeYear = yName; 
                 localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear); 
                 
-                renderYearDropdowns(); // Render lại menu
+                renderYearDropdowns(); 
                 
                 if(isCloudConnected && db) db.ref(`classes`).off(); 
                 await loadYearData(); 
                 if(isCloudConnected) setupRealtimeListeners(); 
                 switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); 
                 
-                // Hiện thông báo chào mừng
                 showToast(`🎉 Chào mừng bạn đến với năm học ${yName}!`, "success");
                 return;
             }
 
             // --- LOGIC CHUYỂN NĂM HỌC CŨ ---
-            if(currentUser.role !== 'admin') {
+            if (currentUser.role === 'admin') {
+                // TÍNH NĂNG CHỈ DÀNH CHO ADMIN: Hỏi xem có áp dụng toàn hệ thống không
+                let confirmGlobal = confirm(`Bạn có muốn áp dụng năm học [${newYear}] này với TOÀN HỆ THỐNG hay không?\n\n- Chọn [OK] (Có): Áp dụng làm năm học mặc định cho mọi người.\n- Chọn [Cancel] (Không): Chỉ chuyển sang để xem lại dữ liệu cũ.`);
+                
+                if (confirmGlobal) {
+                    saveToDB('system/defaultYear', newYear); // Lưu cờ vào Đám mây
+                    showToast(`Đã áp dụng năm học ${newYear} cho TOÀN HỆ THỐNG!`, "success");
+                } else {
+                    showToast(`Chế độ xem: Đang xem lại dữ liệu cũ của năm ${newYear}`, "warning");
+                }
+            } else {
+                // Xử lý cho User thường (Giáo lý viên)
                 let yUsers = await fetchFromDB("users/" + newYear, []); yUsers = toArray(yUsers);
                 let exists = yUsers.find(u => normalizeStr(u.username) === normalizeStr(currentUser.username));
-                if(!exists) { document.getElementById('globalYearSelect').value = activeYear; return showToast("Bạn không được phân công dạy trong năm học này!", "error"); }
+                if(!exists) { 
+                    document.getElementById('globalYearSelect').value = activeYear; 
+                    return showToast("Bạn không được phân công dạy trong năm học này!", "error"); 
+                }
                 currentUser = exists; currentViewClass = currentUser.chidoan; document.getElementById('topbarChiDoanTxt').innerText = currentViewClass;
+                showToast(`Đã chuyển sang CSDL Năm: ${newYear}`, "success");
             }
-            activeYear = newYear; localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear); 
+
+            // Cập nhật View nội bộ
+            activeYear = newYear; 
+            localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear); 
             if(isCloudConnected && db) db.ref(`classes`).off(); 
-            await loadYearData(); if(isCloudConnected) setupRealtimeListeners(); 
-            switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); showToast(`Đã chuyển sang CSDL Năm: ${activeYear}`, "success");
+            await loadYearData(); 
+            if(isCloudConnected) setupRealtimeListeners(); 
+            switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); 
         }
 
         async function switchClass(newClass) { 
