@@ -1253,7 +1253,12 @@
         }
         function logout() { location.reload(); }
 
-        if (currentUser.role === 'admin') {
+       async function finishLogin() {
+            try {
+                document.getElementById('loginOverlay').style.display = 'none'; 
+                document.getElementById('forcePasswordOverlay').style.display = 'none';
+                
+                if (currentUser.role === 'admin') {
                     currentViewClass = CHI_DOAN_LIST.find(c => c === "Thiếu 3C") || CHI_DOAN_LIST[0]; 
                     document.getElementById('topbarChiDoanTxt').style.display = 'none'; 
                     document.getElementById('adminTopClassSelect').style.display = 'inline-block'; 
@@ -1266,7 +1271,28 @@
                     document.getElementById('btnDeleteYear').style.display = 'inline-block';
                     document.getElementById('btnDeleteClass').style.display = 'inline-block';
                 } else {
+                    currentViewClass = currentUser.chidoan;
+                    document.getElementById('topbarChiDoanTxt').style.display = 'inline-block'; 
+                    document.getElementById('topbarChiDoanTxt').innerText = currentViewClass; 
+                    document.getElementById('adminTopClassSelect').style.display = 'none'; 
+                    document.getElementById('navSystemAdmin').style.display = 'none'; 
+                    document.getElementById('navYearAdmin').style.display = 'none';
+                }
+                
+                document.getElementById('displayUsername').innerText = currentUser.username;
+                let roleStr = currentUser.role === 'admin' ? 'SUPER ADMIN' : (currentUser.role === 'lead' ? 'GLV CHÍNH' : (currentUser.role === 'assistant' ? 'GLV Phó' : 'Hỗ Trợ'));
+                document.getElementById('displayRole').innerText = roleStr;
+                if(currentUser.role === 'collab') document.querySelector('.nav-item[data-tab="settings"]').style.display = 'none';
 
+                await loadClassData(); 
+                switchTab('dashboard', document.querySelector('.nav-item[data-tab="dashboard"]')); 
+                showToast(`Đăng nhập thành công! Quyền: ${roleStr}`);
+                setupRealtimeListeners();
+            } catch(e) { 
+                console.error(e); 
+                showToast("Lỗi nạp cấu trúc: " + e.message, "error"); 
+            }
+        }
         function setupRealtimeListeners() {
             if(!isCloudConnected || !db) return;
             let path = `classes/${activeYear}/${currentViewClass}`;
