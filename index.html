@@ -1356,8 +1356,12 @@
                     document.getElementById('topbarChiDoanTxt').style.display = 'none'; 
                     document.getElementById('adminTopClassSelect').style.display = 'inline-block'; 
                     document.getElementById('adminTopClassSelect').value = currentViewClass; 
+                    
+                    // MỞ HIỂN THỊ CÁC TAB CHỨC NĂNG CỦA ADMIN
                     document.getElementById('navSystemAdmin').style.display = 'flex'; 
                     document.getElementById('navYearAdmin').style.display = 'flex'; 
+                    document.getElementById('navGLVProfile').style.display = 'flex'; // <--- DÒNG BỊ THIẾU ĐỂ HIỆN TAB HỒ SƠ GLV NẰM Ở ĐÂY
+                    
                     document.querySelector('#profRole option[value="admin"]').style.display = 'block';
                     
                     // MỞ HIỂN THỊ 2 NÚT XÓA CHO ADMIN
