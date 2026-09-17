@@ -470,7 +470,9 @@
             <div class="nav-item" data-tab="users" onclick="switchTab('users', this)"><i class="fa-solid fa-users-gear"></i> Quản Lý Nhân Sự</div>
             <div class="nav-item" data-tab="external-tool" onclick="switchTab('external-tool', this)"><i class="fa-solid fa-layer-group"></i> Tiện Ích Tích Hợp</div>
 
-            <div class="nav-item" data-tab="system-admin" id="navSystemAdmin" onclick="switchTab('system-admin', this)" style="display:none; color: #fca5a5; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-server"></i> Quản Trị Phân Quyền</div>
+           <div class="nav-item" data-tab="system-admin" id="navSystemAdmin" onclick="switchTab('system-admin', this)" style="display:none; color: #fca5a5; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-server"></i> Quản Trị Phân Quyền</div>
+            <!-- THÊM DÒNG NÀY -->
+            <div class="nav-item" data-tab="glv-profile" id="navGLVProfile" onclick="switchTab('glv-profile', this)" style="display:none; color: #a78bfa; font-weight: bold;"><i class="fa-solid fa-address-card"></i> Hồ Sơ Giáo Lý Viên</div>
             <div class="nav-item" data-tab="year-admin" id="navYearAdmin" onclick="switchTab('year-admin', this)" style="display:none; color: #93c5fd; font-weight: bold;"><i class="fa-solid fa-calendar-check"></i> Quản Trị Năm Học</div>
 
             <div class="nav-item" data-tab="profile" onclick="switchTab('profile', this)" style="display: none;"><i class="fa-solid fa-id-badge"></i> Hồ Sơ Cá Nhân</div>
@@ -846,6 +848,63 @@
                 </div>
             </div>
 
+            <!-- GLV Profile Tab (Dành cho Admin) -->
+            <div id="tab-glv-profile" class="tab-content">
+                <div class="page-header">
+                    <div><h1 style="color: #a78bfa;">Hồ Sơ Giáo Lý Viên</h1><p>Quản lý lý lịch và thông tin cá nhân của Ban Huynh trưởng - Giáo lý viên.</p></div>
+                </div>
+                
+                <div class="card">
+                    <div class="card-header" style="background: #f0fdfa; border-bottom: 2px solid #14b8a6;"><span style="color: #0f766e;"><i class="fa-solid fa-user-tie"></i> Kênh Khởi Tạo / Cập Nhật Nhanh GLV</span></div>
+                    <div class="table-responsive" style="border-radius: 0 0 var(--radius-md) var(--radius-md); padding-bottom: 5px;">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th style="min-width: 120px;">Tên Thánh</th>
+                                    <th style="min-width: 180px;">Họ và Tên (Tên Đăng Nhập) *</th>
+                                    <th style="min-width: 130px;">Ngày Sinh</th>
+                                    <th style="min-width: 130px;">Số Điện Thoại</th>
+                                    <th style="min-width: 180px;">Email</th>
+                                    <th style="min-width: 150px;">Bằng Cấp (Cấp hiệu)</th>
+                                    <th style="min-width: 80px;">Lưu</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="background: #f8fafc;">
+                                    <td><input type="text" id="newGLVTenThanh" class="excel-input new-row-input"></td>
+                                    <td><input type="text" id="newGLVName" class="excel-input new-row-input" placeholder="Nhập Họ và tên..."></td>
+                                    <td><input type="text" id="newGLVDOB" class="excel-input new-row-input" placeholder="DD-MM-YYYY"></td>
+                                    <td><input type="text" id="newGLVSdt" class="excel-input new-row-input"></td>
+                                    <td><input type="text" id="newGLVEmail" class="excel-input new-row-input"></td>
+                                    <td><input type="text" id="newGLVBangCap" class="excel-input new-row-input"></td>
+                                    <td><button class="btn-save" onclick="addNewGLVRow()" style="padding: 0.4rem 0.8rem; border-radius: 4px; width: 100%;"><i class="fa-solid fa-floppy-disk"></i></button></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card" style="border-top: 4px solid #8b5cf6;">
+                    <div class="card-header"><span style="color: #8b5cf6; font-weight: 700;"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Huynh Trưởng - GLV</span></div>
+                    <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
+                        <table class="excel-table">
+                            <thead>
+                                <tr>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">STT</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Tên Thánh</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Họ và Tên</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Ngày Sinh</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Số Điện Thoại</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Email</th>
+                                    <th style="position: sticky; top: 0; background: #f1f5f9; z-index: 2;">Bằng Cấp</th>
+                                    <th style="position: sticky; top: 0; background: #fee2e2; color: #991b1b; z-index: 2; width: 60px;">Xóa</th>
+                                </tr>
+                            </thead>
+                            <tbody id="glvProfilesTbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
             <!-- System Admin Tab -->
             <div id="tab-system-admin" class="tab-content">
                 <div class="page-header"><div><h1 style="color: var(--danger);">Quản Trị Nhân Sự & Hệ Thống</h1><p>Duyệt yêu cầu quyền hạn và nạp dữ liệu phân công hàng loạt cho NĂM HỌC HIỆN TẠI.</p></div></div>
@@ -969,6 +1028,18 @@
             "Chiên 1A","Chiên 1B","Chiên 2A","Chiên 2B","Ấu 1A","Ấu 1B","Ấu 1C","Ấu 2A","Ấu 2B","Ấu 2C",
             "Thiếu 1A","Thiếu 1B","Thiếu 1C","Thiếu 2A","Thiếu 2B","Thiếu 2C","Thiếu 3A","Thiếu 3B","Thiếu 3C",
             "Nghĩa 1","Nghĩa 2","Hiệp 1","Hiệp 2","Dự Trưởng", "Hệ Thống Admin"
+        ];
+
+        const DUTY_LIST = [
+            "Chưa phân công", "Xứ đoàn Trưởng", "Xứ đoàn phó", "Thư ký", "Thủ quỹ", 
+            "Trưởng ngành Ấu", "Trưởng ngành Thiếu", "Trưởng ngành Nghĩa", "Trưởng ngành Hiệp", 
+            "Phó ngành Ấu", "Phó ngành Thiếu", "Phó ngành Nghĩa", "Phó ngành Hiệp", 
+            "Thành viên ngành Ấu", "Thành viên ngành Thiếu", "Thành viên ngành Nghĩa", "Thành viên ngành Hiệp"
+        ];
+        
+        const COMMITTEE_LIST = [
+            "Chưa phân công", "Ban Phụng Vụ", "Ban Trực", "Ban Sinh Hoạt", 
+            "Ban Học Vụ", "Ban Truyền Thông", "Ban Bác Ái", "Ban Kỹ Thuật"
         ];
 
         const DEFAULT_AUTH = { "admin": "1", "maria phan trần thanh thảo": "1", "micae lưu minh khôi": "1", "maria phạm trần kim anh": "1" };
@@ -1317,7 +1388,8 @@
             db.ref(`users/${activeYear}`).on('value', (snapshot) => {
                 if(snapshot.exists()) { 
                     globalUsers = toArray(snapshot.val()); 
-                    if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement(); 
+                    if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
+                    if(document.getElementById('tab-glv-profile').classList.contains('active')) renderGLVProfiles();
                 }
             });
         }
@@ -1478,6 +1550,7 @@
             if(tabId === 'year-admin') renderYearlySummary(); 
             if(tabId === 'students') renderStudentProfiles();
             if(tabId === 'wheel') initWheel();
+            if(tabId === 'glv-profile') renderGLVProfiles();
         }
 
         async function loadClassData() {
@@ -2347,19 +2420,75 @@
         }
 
         function renderUserManagement() {
-            const tbody = document.getElementById('userMgmtTbody'); tbody.innerHTML = ''; const isAdmin = currentUser.role === 'admin';
-            document.getElementById('thClassCol').style.display = isAdmin ? 'table-cell' : 'none';
-            if(isAdmin) { document.getElementById('userTitleHeader').innerText = "Quản Lý Nhân Sự Năm Học " + activeYear; document.getElementById('userDescHeader').innerText = "Admin có đặc quyền thiết lập phân quyền cho toàn bộ hệ thống."; } else { document.getElementById('userTitleHeader').innerText = "Quản Lý Nhân Sự Lớp Cục Bộ"; document.getElementById('userDescHeader').innerText = "Danh sách tài khoản đang cùng phụ trách lớp hiện tại. Admin giữ quyền set chức vụ."; }
-            let usersToView = isAdmin ? globalUsers : globalUsers.filter(u => u.chidoan === currentViewClass); let stt = 1;
+            const tbody = document.getElementById('userMgmtTbody'); tbody.innerHTML = ''; 
+            const isAdmin = currentUser.role === 'admin';
+            
+            // Cập nhật Header của Bảng
+            let theadHtml = `<tr><th style="width: 50px;">STT</th><th class="text-left">Họ và Tên</th>`;
+            if (isAdmin) {
+                theadHtml += `<th>Lớp Phụ Trách</th><th>Nhiệm Vụ Năm Học</th><th>Ban Trực</th>`;
+            } else {
+                theadHtml += `<th style="display:none;">Lớp Phụ Trách</th>`;
+            }
+            theadHtml += `<th>Phân Quyền (Role)</th><th>Hành Động Thiết Lập</th></tr>`;
+            document.querySelector('#tab-users .excel-table thead').innerHTML = theadHtml;
+
+            if(isAdmin) { 
+                document.getElementById('userTitleHeader').innerText = "Quản Lý Nhân Sự Năm Học " + activeYear; 
+            } else { 
+                document.getElementById('userTitleHeader').innerText = "Quản Lý Nhân Sự Lớp Cục Bộ"; 
+            }
+
+            let usersToView = isAdmin ? globalUsers : globalUsers.filter(u => u.chidoan === currentViewClass); 
+            let stt = 1;
+            
             usersToView.forEach(u => {
                 if(u.username.toLowerCase() === 'admin' && !isAdmin) return;
+                
                 let roleName = u.role === 'admin' ? '<span class="badge-admin">Admin</span>' : (u.role === 'lead' ? 'GLV Chính' : (u.role === 'assistant' ? 'GLV Phó' : 'Hỗ Trợ'));
-                let classCol = isAdmin ? `<td>${u.chidoan}</td>` : ''; let actionSelect = '';
+                
+                let classCol = ''; let nhiemVuCol = ''; let banTrucCol = ''; let actionSelect = '';
+                
                 if(isAdmin) {
-                    if (u.username.toLowerCase() === 'admin') { actionSelect = `<span style="color:#991b1b; font-weight: bold; font-size: 0.8rem;"><i class="fa-solid fa-shield-halved"></i> HỆ THỐNG TỐI CAO</span>`; } else { actionSelect = `<select style="padding: 0.3rem; border-radius: 4px;" onchange="adminSetRole('${u.username}', this.value)"><option value="lead" ${u.role==='lead'?'selected':''}>GLV Chính</option><option value="assistant" ${u.role==='assistant'?'selected':''}>GLV Phó</option><option value="collab" ${u.role==='collab'?'selected':''}>Hỗ Trợ</option></select>`; }
-                } else { actionSelect = `<span style="color:var(--text-muted); font-size: 0.8rem;"><i class="fa-solid fa-lock"></i> Khóa (Cần Admin set)</span>`; }
-                tbody.innerHTML += `<tr><td>${stt++}</td><td class="text-left"><b>${u.username}</b></td>${classCol}<td>${roleName}</td><td>${actionSelect}</td></tr>`;
+                    if (u.username.toLowerCase() === 'admin') { 
+                        classCol = `<td><span class="badge-admin">HỆ THỐNG</span></td>`;
+                        nhiemVuCol = `<td>-</td>`;
+                        banTrucCol = `<td>-</td>`;
+                        actionSelect = `<span style="color:#991b1b; font-weight: bold; font-size: 0.8rem;"><i class="fa-solid fa-shield-halved"></i> TỐI CAO</span>`; 
+                    } else { 
+                        // Dropdown Lớp học
+                        let classOpts = `<option value="Chưa phân công">Chưa phân công</option>` + CHI_DOAN_LIST.filter(c => c !== "Hệ Thống Admin").map(c => `<option value="${c}" ${u.chidoan === c ? 'selected' : ''}>${c}</option>`).join('');
+                        classCol = `<td><select class="att-select" style="min-width:120px;" onchange="updateUserField('${u.username}', 'chidoan', this.value)">${classOpts}</select></td>`;
+                        
+                        // Dropdown Nhiệm vụ
+                        let nvOpts = DUTY_LIST.map(d => `<option value="${d}" ${(u.nhiemVu || 'Chưa phân công') === d ? 'selected' : ''}>${d}</option>`).join('');
+                        nhiemVuCol = `<td><select class="att-select" style="min-width:150px;" onchange="updateUserField('${u.username}', 'nhiemVu', this.value)">${nvOpts}</select></td>`;
+                        
+                        // Dropdown Ban trực
+                        let btOpts = COMMITTEE_LIST.map(b => `<option value="${b}" ${(u.banTruc || 'Chưa phân công') === b ? 'selected' : ''}>${b}</option>`).join('');
+                        banTrucCol = `<td><select class="att-select" style="min-width:140px;" onchange="updateUserField('${u.username}', 'banTruc', this.value)">${btOpts}</select></td>`;
+
+                        // Dropdown Phân quyền
+                        actionSelect = `<select class="att-select" onchange="updateUserField('${u.username}', 'role', this.value)"><option value="lead" ${u.role==='lead'?'selected':''}>GLV Chính</option><option value="assistant" ${u.role==='assistant'?'selected':''}>GLV Phó</option><option value="collab" ${u.role==='collab'?'selected':''}>Hỗ Trợ</option></select>`; 
+                    }
+                } else { 
+                    classCol = `<td style="display:none;"></td>`;
+                    actionSelect = `<span style="color:var(--text-muted); font-size: 0.8rem;"><i class="fa-solid fa-lock"></i> Khóa</span>`; 
+                }
+                
+                tbody.innerHTML += `<tr><td>${stt++}</td><td class="text-left"><b>${u.username}</b></td>${classCol}${nhiemVuCol}${banTrucCol}<td>${roleName}</td><td>${actionSelect}</td></tr>`;
             });
+        }
+
+        // HÀM MỚI: Xử lý khi Admin thay đổi bất kỳ thuộc tính nào ở bảng trên
+        function updateUserField(username, field, value) {
+            if (username.toLowerCase() === 'admin') return showToast("Không thể sửa Super Admin!", "error");
+            let user = globalUsers.find(u => u.username === username); 
+            if(user) { 
+                user[field] = value; 
+                saveToDB("users/" + activeYear, globalUsers); 
+                showToast(`Đã lưu thay đổi cho GLV ${username}`, "success"); 
+            }
         }
         function adminSetRole(username, newRole) {
             if (username.toLowerCase() === 'admin') return showToast("Không thể tước quyền của Super Admin!", "error");
@@ -2807,6 +2936,92 @@
                 showToast("Lỗi khi xóa: " + err.message, "error");
                 event.target.innerHTML = btnOriginalText;
             }
+        }
+        // ================= XỬ LÝ HỒ SƠ GIÁO LÝ VIÊN =================
+        function renderGLVProfiles() {
+            const tbody = document.getElementById('glvProfilesTbody'); if(!tbody) return; tbody.innerHTML = '';
+            let stt = 1;
+            globalUsers.forEach(u => {
+                if (u.username.toLowerCase() === 'admin') return;
+                let p = u.profile || { tenThanh: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
+                
+                tbody.innerHTML += `<tr>
+                    <td>${stt++}</td>
+                    <td><input type="text" class="excel-input text-left" value="${esc(p.tenThanh)}" onblur="updateGLVProfile('${u.username}', 'tenThanh', this.value)"></td>
+                    <td class="text-left" style="font-weight: 600;">${u.username}</td>
+                    <td><input type="text" class="excel-input" value="${esc(p.ngaySinh)}" onblur="updateGLVProfile('${u.username}', 'ngaySinh', this.value)" placeholder="DD-MM-YYYY"></td>
+                    <td><input type="text" class="excel-input" value="${esc(p.sdt)}" onblur="updateGLVProfile('${u.username}', 'sdt', this.value)"></td>
+                    <td><input type="text" class="excel-input text-left" value="${esc(p.email)}" onblur="updateGLVProfile('${u.username}', 'email', this.value)"></td>
+                    <td><input type="text" class="excel-input text-left" value="${esc(p.bangCap)}" onblur="updateGLVProfile('${u.username}', 'bangCap', this.value)"></td>
+                    <td><button class="btn-reject" style="padding: 0.35rem 0.65rem; border-radius: 4px; background:#ef4444;" onclick="deleteGLV('${u.username}')" title="Xóa tài khoản này"><i class="fa-solid fa-trash-can"></i></button></td>
+                </tr>`;
+            });
+        }
+
+        function updateGLVProfile(username, field, value) {
+            let user = globalUsers.find(u => u.username === username);
+            if(user) {
+                if(!user.profile) user.profile = { tenThanh: '', ngaySinh: '', sdt: '', email: '', bangCap: '' };
+                user.profile[field] = value;
+                saveToDB("users/" + activeYear, globalUsers);
+            }
+        }
+
+        function addNewGLVRow() {
+            let tenThanh = document.getElementById('newGLVTenThanh').value.trim();
+            let name = document.getElementById('newGLVName').value.trim();
+            let ngaySinh = document.getElementById('newGLVDOB').value.trim();
+            let sdt = document.getElementById('newGLVSdt').value.trim();
+            let email = document.getElementById('newGLVEmail').value.trim();
+            let bangCap = document.getElementById('newGLVBangCap').value.trim();
+
+            if(!name) return showToast("Họ và Tên (Tên đăng nhập) không được bỏ trống!", "warning");
+            
+            let normName = normalizeStr(name);
+            let existingUser = globalUsers.find(u => normalizeStr(u.username) === normName);
+            
+            if (existingUser) {
+                // Nếu User đã tồn tại -> Chỉ cập nhật hồ sơ
+                if(!existingUser.profile) existingUser.profile = {};
+                if(tenThanh) existingUser.profile.tenThanh = tenThanh;
+                if(ngaySinh) existingUser.profile.ngaySinh = ngaySinh;
+                if(sdt) existingUser.profile.sdt = sdt;
+                if(email) existingUser.profile.email = email;
+                if(bangCap) existingUser.profile.bangCap = bangCap;
+                showToast("Đã cập nhật hồ sơ cho GLV: " + name, "success");
+            } else {
+                // Nếu User chưa tồn tại -> Tạo luôn tài khoản đăng nhập
+                let newUser = {
+                    username: name,
+                    chidoan: "Chưa phân công",
+                    role: "collab",
+                    nhiemVu: "Chưa phân công",
+                    banTruc: "Chưa phân công",
+                    profile: { tenThanh: tenThanh, ngaySinh: ngaySinh, sdt: sdt, email: email, bangCap: bangCap }
+                };
+                globalUsers.push(newUser);
+                // Khởi tạo mật khẩu mặc định "1"
+                authDB[name] = "1"; 
+                saveToDB('auth', authDB);
+                showToast("Tạo mới tài khoản GLV: " + name + " (Mật khẩu: 1)", "success");
+            }
+            
+            saveToDB("users/" + activeYear, globalUsers);
+            renderGLVProfiles();
+            if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
+            
+            ['newGLVTenThanh','newGLVName','newGLVDOB','newGLVSdt','newGLVEmail','newGLVBangCap'].forEach(id => document.getElementById(id).value = '');
+        }
+
+        function deleteGLV(username) {
+            if(!confirm(`CẢNH BÁO: Xác nhận xóa HOÀN TOÀN tài khoản và hồ sơ của Giáo Lý Viên: [${username}]?`)) return;
+            globalUsers = globalUsers.filter(u => u.username !== username);
+            delete authDB[username];
+            saveToDB('auth', authDB);
+            saveToDB("users/" + activeYear, globalUsers);
+            renderGLVProfiles();
+            if(document.getElementById('tab-users').classList.contains('active')) renderUserManagement();
+            showToast("Đã xóa tài khoản GLV thành công!", "success");
         }
     </script>
 </body>
