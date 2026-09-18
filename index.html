@@ -3696,24 +3696,23 @@
                 </div>
             `;
 
-            // THAY THẾ LINK NÀY BẰNG LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN
-            const GAS_URL = "https://script.google.com/macros/s/AKfycbzyd88FMN-TTLcAqjGfuDXZrK82ylQLdOoYlRcqGhzbic-v6FliqqiAhq6IhPvqhTRW/exec";
+            // THAY THẾ LINK NÀY BẰNG LINK WEB APP MỚI TINH CỦA BẠN
+            const GAS_URL = "https://script.google.com/macros/s/AKfycbxSaAke_IsTCrGmHB53QrAz2l5w4ZLz9RXNem4odzHQcqZ1eKM3nZJM6mXkwVhEUTke/exec";
 
             fetch(GAS_URL, {
                 method: "POST",
-                mode: "no-cors",
                 headers: {
-                    "Content-Type": "text/plain"
+                    "Content-Type": "text/plain;charset=utf-8"
                 },
                 body: JSON.stringify({
                     toEmails: emailString,
                     subject: mailSubject,
                     body: mailBody
                 })
-            }).then(() => { 
-                console.log("Đã gửi lệnh bắn email tới server Google."); 
+            }).then(response => {
+                console.log("Đã gửi lệnh tới Google.");
             }).catch(err => { 
-                console.error("Lỗi khi kết nối tới máy chủ gửi mail:", err); 
+                console.error("Lỗi khi kết nối tới máy chủ:", err); 
             });
         } // <--- DẤU NGOẶC ĐÓNG CỦA LỆNH IF (RẤT QUAN TRỌNG)
         // ================= KẾT THÚC KHỐI GỬI EMAIL =================
