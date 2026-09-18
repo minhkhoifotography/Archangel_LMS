@@ -3677,7 +3677,7 @@
             }
         });
 
-        // 2. Gửi API nếu có ít nhất 1 email
+       // 2. Gửi API nếu có ít nhất 1 email
         if (targetEmails.length > 0) {
             let emailString = targetEmails.join(",");
             let mailSubject = `[LMS] ${type === 'task' ? 'Nhiệm vụ mới' : 'Nhắc việc mới'}: ${titleText}`;
@@ -3701,9 +3701,9 @@
 
             fetch(GAS_URL, {
                 method: "POST",
-                mode: "no-cors", // Dòng quan trọng: Ép bỏ qua xác thực CORS
+                mode: "no-cors",
                 headers: {
-                    "Content-Type": "text/plain" // Giúp Google Apps Script dễ đọc JSON hơn
+                    "Content-Type": "text/plain"
                 },
                 body: JSON.stringify({
                     toEmails: emailString,
@@ -3711,17 +3711,17 @@
                     body: mailBody
                 })
             }).then(() => { 
-                // Khi dùng no-cors, phản hồi sẽ bị mờ (opaque), ta không đọc được res.json()
                 console.log("Đã gửi lệnh bắn email tới server Google."); 
             }).catch(err => { 
                 console.error("Lỗi khi kết nối tới máy chủ gửi mail:", err); 
             });
+        } // <--- DẤU NGOẶC ĐÓNG CỦA LỆNH IF (RẤT QUAN TRỌNG)
         // ================= KẾT THÚC KHỐI GỬI EMAIL =================
     }).catch(e => {
         showToast("Lỗi hệ thống: " + e.message, "error");
-    });
-}
-
+    }); // <--- DẤU NGOẶC ĐÓNG CỦA HÀM PROMISE FIREBASE
+} // <--- DẤU NGOẶC NHỌN KẾT THÚC HÀM submitNewTask()
+        
         function listenToTasks() {
             if(!isCloudConnected || !db) return;
             
