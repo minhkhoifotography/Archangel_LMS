@@ -3697,19 +3697,25 @@
             `;
 
             // THAY THẾ LINK NÀY BẰNG LINK WEB APP GOOGLE APPS SCRIPT CỦA BẠN
-            const GAS_URL = "https://script.google.com/macros/s/AKfycbzyd88FMN-TTLcAqjGfuDXZrK82ylQLdOoYlRcqGhzbic-v6FliqqiAhq6IhPvqhTRW/exec";
+            const GAS_URL = "https://script.google.com/macros/s/AKfycbyMUVRmyb5zqhkGo2n-CRg-oGRwgpZJaffrrjWd_ihYMyQW3M1D29CmS9EwjCVRuRX3/exec";
 
             fetch(GAS_URL, {
                 method: "POST",
+                mode: "no-cors", // Dòng quan trọng: Ép bỏ qua xác thực CORS
+                headers: {
+                    "Content-Type": "text/plain" // Giúp Google Apps Script dễ đọc JSON hơn
+                },
                 body: JSON.stringify({
                     toEmails: emailString,
                     subject: mailSubject,
                     body: mailBody
                 })
-            }).then(response => response.json())
-              .then(res => { console.log("Gửi email thành công:", res); })
-              .catch(err => { console.error("Lỗi gửi email:", err); });
-        }
+            }).then(() => { 
+                // Khi dùng no-cors, phản hồi sẽ bị mờ (opaque), ta không đọc được res.json()
+                console.log("Đã gửi lệnh bắn email tới server Google."); 
+            }).catch(err => { 
+                console.error("Lỗi khi kết nối tới máy chủ gửi mail:", err); 
+            });
         // ================= KẾT THÚC KHỐI GỬI EMAIL =================
     }).catch(e => {
         showToast("Lỗi hệ thống: " + e.message, "error");
