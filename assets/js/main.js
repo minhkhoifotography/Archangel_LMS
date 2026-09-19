@@ -203,3 +203,77 @@ window.exportToCSV = exportToCSV;
 window.exportStudentProfiles = exportStudentProfiles;
 window.exportAcademicSheet = exportAcademicSheet;
 window.exportGLVProfiles = exportGLVProfiles;
+
+// CÁC HÀM TIỆN ÍCH DỮ LIỆU BỊ THIẾU
+function toArray(obj) {
+    if (!obj) return [];
+    if (Array.isArray(obj)) return obj.filter(item => item !== null && item !== undefined);
+    return Object.values(obj).filter(item => item !== null && item !== undefined);
+}
+
+function normalizeData(data) {
+    if (!data) return { settings: { hk1Locked: false, hk2Locked: false, finalLocked: false }, teams: [], rawList: [] };
+    if (!data.settings) data.settings = { hk1Locked: false, hk2Locked: false, finalLocked: false };
+    if (!data.rawList) data.rawList = []; 
+    
+    data.teams = toArray(data.teams);
+    data.teams.forEach(t => {
+        if(!t.moneyHistory) t.moneyHistory = [];
+        t.members = toArray(t.members);
+        t.members.forEach(m => {
+            if(!m.tenThanh) m.tenThanh = "";
+            if(!m.name) m.name = "";
+            if(!m.role) m.role = "member"; 
+            if(m.flagged === undefined) m.flagged = false;
+            if(m.originalIndex === undefined) m.originalIndex = m.id || 0; 
+            if(!m.profile) m.profile = { gioiTinh: '', ngaySinh: '', ngayRT: '', noiRT: '', ngayRLLD: '', noiRLLD: '', hoTenCha: '', sdtCha: '', hoTenMe: '', sdtMe: '', diaChi: '', ghiChu: '' };
+            if(!m.attHistory) m.attHistory = {}; 
+            if(!m.stats) m.stats = { phatBieu: 0, thuocBai: 0, viecRieng: 0, voLe: 0, viTien: 0 };
+            if(!m.academic || typeof m.academic.hk1 !== 'object') {
+                m.academic = { hk1: { m15: '', t1: '', thi: '' }, hk2: { m15: '', t1: '', thi: '' }, finalComment: '' };
+            } else {
+                if(m.academic.hk1.m15 === undefined) m.academic.hk1.m15 = '';
+                if(m.academic.hk1.t1 === undefined) m.academic.hk1.t1 = '';
+                if(m.academic.hk1.thi === undefined) m.academic.hk1.thi = '';
+                if(!m.academic.hk2) m.academic.hk2 = { m15: '', t1: '', thi: '' };
+                if(m.academic.hk2.m15 === undefined) m.academic.hk2.m15 = '';
+                if(m.academic.hk2.t1 === undefined) m.academic.hk2.t1 = '';
+                if(m.academic.hk2.thi === undefined) m.academic.hk2.thi = '';
+                if(m.academic.finalComment === undefined) m.academic.finalComment = '';
+            }
+        });
+    });
+    return data;
+}
+
+async function fetchFromDB(path, defaultVal) {
+    let localRaw = localStorage.getItem(path.replace(/\//g, '_'));
+    let localVal = defaultVal;
+    try { localVal = localRaw ? JSON.parse(localRaw) : defaultVal; } catch(e) {}
+
+    if (isCloudConnected && db) {
+        try {
+            const snapshot = await Promise.race([
+                db.ref(path).once('value'),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2500))
+            ]);
+            if(snapshot.exists()) {
+                let cloudVal = snapshot.val();
+                localStorage.setItem(path.replace(/\//g, '_'), JSON.stringify(cloudVal));
+                return cloudVal;
+            } else {
+                localStorage.removeItem(path.replace(/\//g, '_'));
+                return defaultVal;
+            }
+        } catch(e) {}
+    }
+    return localVal;
+}
+
+function saveToDB(path, data) {
+    localStorage.setItem(path.replace(/\//g, '_'), JSON.stringify(data));
+    if (isCloudConnected && db) {
+        setCloudStatus('syncing');
+        db.ref(path).set(data).then(() => { setCloudStatus('online'); }).catch((e) => { setCloudStatus('offline'); isCloudConnected = false; });
+    }
+}
