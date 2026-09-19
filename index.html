@@ -16,7 +16,9 @@
     <!-- FIREBASE SDK -->
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script> <!-- THÊM DÒNG NÀY -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
+    <!-- THÊM DÒNG NÀY VÀO DƯỚI CÙNG -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
     <style>
         /* Hiệu ứng bóng ma (Ghost) khi kéo thả học sinh */
@@ -1402,6 +1404,11 @@
 
         const normalizeStr = (str) => { if (!str) return ""; return String(str).normalize('NFC').toLowerCase().replace(/\s+/g, ' ').trim(); };
 
+        // Hàm chuyển Tên đăng nhập thành Email giả lập để dùng cho Firebase Auth
+        function getPseudoEmail(username) {
+                return normalizeStr(username).replace(/[^a-z0-9]/g, '') + "@corpus.lms";
+        }
+
         function toArray(obj) {
             if (!obj) return [];
             if (Array.isArray(obj)) return obj.filter(item => item !== null && item !== undefined);
@@ -1604,103 +1611,142 @@
         }
 
         async function register() {
-            const name = document.getElementById('regUsername').value.trim(); const pass = document.getElementById('regPassword').value.trim(); const cd = document.getElementById('regChiDoan').value;
-            if(!name || !pass) return showToast("Vui lòng điền đủ thông tin", "error"); if(name.toLowerCase() === 'admin') return showToast("Không được mạo danh admin!", "error");
-            
-            authDB = await fetchFromDB('auth', DEFAULT_AUTH);
-            if(!authDB || typeof authDB !== 'object') authDB = DEFAULT_AUTH;
-            
-            let normName = normalizeStr(name);
-            let authKeys = Object.keys(authDB).map(k => normalizeStr(k)); 
-            if(authKeys.includes(normName)) return showToast("Tên đăng nhập đã tồn tại trong Hệ thống!", "error");
-            
-            authDB[name] = pass; saveToDB('auth', authDB);
-            await loadYearData(); 
-            globalUsers.push({ username: name, chidoan: cd, role: "collab" }); 
-            saveToDB("users/" + activeYear, globalUsers); 
-            
-            showToast("Đăng ký thành công! Đang đăng nhập..."); setTimeout(() => { document.getElementById('loginUsername').value = name; document.getElementById('loginPassword').value = pass; toggleAuthForm(); login(); }, 1000);
+    const name = document.getElementById('regUsername').value.trim(); 
+    const pass = document.getElementById('regPassword').value.trim(); 
+    const cd = document.getElementById('regChiDoan').value;
+    
+    if(!name || !pass) return showToast("Vui lòng điền đủ thông tin", "error"); 
+    if(name.toLowerCase() === 'admin') return showToast("Không được mạo danh admin!", "error");
+    
+    const pseudoEmail = getPseudoEmail(name);
+    
+    try {
+        // 1. Tạo tài khoản mã hóa an toàn trên Firebase Auth
+        const userCredential = await firebase.auth().createUserWithEmailAndPassword(pseudoEmail, pass);
+        
+        // 2. Lưu thông tin phụ vào Database (KHÔNG LƯU MẬT KHẨU NỮA)
+        await loadYearData(); 
+        globalUsers.push({ username: name, chidoan: cd, role: "collab" }); 
+        saveToDB("users/" + activeYear, globalUsers); 
+        
+        showToast("Đăng ký thành công! Đang đăng nhập..."); 
+        setTimeout(() => { 
+            document.getElementById('loginUsername').value = name; 
+            document.getElementById('loginPassword').value = pass; 
+            toggleAuthForm(); 
+            login(); 
+        }, 1000);
+        
+    } catch (error) {
+        if (error.code === 'auth/email-already-in-use') {
+            showToast("Tên đăng nhập này đã tồn tại trong Hệ thống!", "error");
+        } else if (error.code === 'auth/weak-password') {
+            showToast("Mật khẩu quá yếu (yêu cầu ít nhất 6 ký tự)!", "error");
+        } else {
+            showToast("Lỗi đăng ký: " + error.message, "error");
         }
+    }
+}
 
-        async function login() {
-            const btn = document.getElementById('btnLogin'); const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Đang kết nối...'; btn.disabled = true;
-
-            try {
-                let sYears = await fetchFromDB('system/years', ["2025-2026", "2026-2027"]);
-                systemYears = toArray(sYears); saveToDB('system/years', systemYears);
-
-                // --- ĐỒNG BỘ NĂM HỌC TOÀN HỆ THỐNG DO ADMIN SET ---
-                let globalDefaultYear = await fetchFromDB('system/defaultYear', null);
-                if (globalDefaultYear && systemYears.includes(globalDefaultYear)) {
-                    activeYear = globalDefaultYear;
-                } else if (!activeYear || !systemYears.includes(activeYear)) {
-                    activeYear = systemYears[systemYears.length - 1]; // Mặc định lấy năm học mới nhất
-                }
-                localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
-                renderYearDropdowns();
-                // ----------------------------------------------------
-
-                const userIn = document.getElementById('loginUsername').value.trim(); const passIn = document.getElementById('loginPassword').value.trim();
-                
-                authDB = await fetchFromDB('auth', DEFAULT_AUTH);
-                if(!authDB || typeof authDB !== 'object') authDB = DEFAULT_AUTH;
-
-                let correctPass = null; let realUsername = null;
-                let normUserIn = normalizeStr(userIn);
-                
-                for(let key in authDB) { 
-                    if(normalizeStr(key) === normUserIn) { correctPass = authDB[key]; realUsername = key; break; } 
-                }
-                
-                if(!correctPass || correctPass !== passIn) { showToast("Sai tài khoản hoặc mật khẩu!", "error"); btn.innerHTML = originalText; btn.disabled = false; return; }
-
-                await loadYearData(); 
-                let foundUser = globalUsers.find(u => normalizeStr(u.username) === normalizeStr(realUsername));
-                
-                if (!foundUser) {
-                    if (realUsername.toLowerCase() === 'admin') { 
-                        foundUser = { username: "admin", chidoan: "Hệ Thống Admin", role: "admin" }; globalUsers.push(foundUser); saveToDB("users/" + activeYear, globalUsers); 
-                    } else {
-                        let foundYear = null;
-                        for(let i = systemYears.length - 1; i >= 0; i--) { 
-                            let yUsers = await fetchFromDB("users/" + systemYears[i], []); yUsers = toArray(yUsers);
-                            if(yUsers.find(u => normalizeStr(u.username) === normalizeStr(realUsername))) { foundYear = systemYears[i]; break; } 
-                        }
-                        if(foundYear) { 
-                            activeYear = foundYear; localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear); renderYearDropdowns(); await loadYearData(); 
-                            foundUser = globalUsers.find(u => normalizeStr(u.username) === normalizeStr(realUsername)); showToast(`Chuyển về năm ${activeYear}.`, "warning"); 
-                        } else { 
-                            showToast("Tài khoản chưa phân công vào Năm học nào!", "error"); btn.innerHTML = originalText; btn.disabled = false; return;
+            async function login() {
+                const btn = document.getElementById('btnLogin'); const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin" style="margin-right: 8px;"></i> Đang kết nối...'; btn.disabled = true;
+            
+                try {
+                    let sYears = await fetchFromDB('system/years', ["2025-2026", "2026-2027"]);
+                    systemYears = toArray(sYears); saveToDB('system/years', systemYears);
+            
+                    // Đồng bộ năm học
+                    let globalDefaultYear = await fetchFromDB('system/defaultYear', null);
+                    if (globalDefaultYear && systemYears.includes(globalDefaultYear)) {
+                        activeYear = globalDefaultYear;
+                    } else if (!activeYear || !systemYears.includes(activeYear)) {
+                        activeYear = systemYears[systemYears.length - 1]; 
+                    }
+                    localStorage.setItem('LMS_ACTIVE_YEAR_V44', activeYear);
+                    renderYearDropdowns();
+            
+                    const userIn = document.getElementById('loginUsername').value.trim(); 
+                    const passIn = document.getElementById('loginPassword').value.trim();
+                    const pseudoEmail = getPseudoEmail(userIn);
+            
+                    // Đăng nhập an toàn qua Firebase Auth
+                    await firebase.auth().signInWithEmailAndPassword(pseudoEmail, passIn);
+                    
+                    // Lấy thông tin phân quyền của user từ Database
+                    await loadYearData(); 
+                    let foundUser = globalUsers.find(u => normalizeStr(u.username) === normalizeStr(userIn));
+                    
+                    if (!foundUser) {
+                        if (userIn.toLowerCase() === 'admin') { 
+                            foundUser = { username: "admin", chidoan: "Hệ Thống Admin", role: "admin" }; 
+                            globalUsers.push(foundUser); saveToDB("users/" + activeYear, globalUsers); 
+                        } else {
+                            showToast("Tài khoản chưa được phân công vào Năm học này!", "error"); 
+                            btn.innerHTML = originalText; btn.disabled = false; return;
                         }
                     }
+                    
+                    currentUser = foundUser; 
+                    
+                    // Yêu cầu đổi mật khẩu nếu pass là "1"
+                    if (passIn === "1") { 
+                        document.getElementById('loginFormBox').style.display = 'none'; 
+                        document.getElementById('forcePasswordOverlay').style.display = 'flex'; 
+                    } else { 
+                        await finishLogin(); 
+                    }
+                    
+                } catch (err) {
+                    console.error(err);
+                    if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+                        showToast("Sai tài khoản hoặc mật khẩu!", "error");
+                    } else {
+                        showToast("Lỗi Hệ Thống: " + err.message, "error");
+                    }
+                } finally {
+                    btn.innerHTML = originalText; btn.disabled = false;
                 }
-                
-                currentUser = foundUser; currentUser.password = correctPass; 
-                
-                if (correctPass === "1") { 
-                    document.getElementById('loginFormBox').style.display = 'none'; document.getElementById('forcePasswordOverlay').style.display = 'flex'; 
-                } else { await finishLogin(); }
-            } catch (err) {
-                console.error(err); showToast("Lỗi Hệ Thống: " + err.message, "error");
-            } finally {
-                btn.innerHTML = originalText; btn.disabled = false;
             }
-        }
+            
+                    async function submitNewPassword() {
+                const p1 = document.getElementById('newPass').value.trim(); 
+                const p2 = document.getElementById('confirmNewPass').value.trim();
+                if(p1 !== p2) return showToast("Mật khẩu không khớp!", "error"); 
+                if(p1 === "1") return showToast("Không dùng lại mật khẩu mặc định!", "warning");
+                
+                try {
+                    await firebase.auth().currentUser.updatePassword(p1);
+                    await finishLogin();
+                } catch (error) {
+                    showToast("Lỗi cập nhật mật khẩu: " + error.message, "error");
+                }
+            }
 
-        async function submitNewPassword() {
-            const p1 = document.getElementById('newPass').value.trim(); const p2 = document.getElementById('confirmNewPass').value.trim();
-            if(p1 !== p2) return showToast("Mật khẩu không khớp!", "error"); if(p1 === "1") return showToast("Không dùng lại mật khẩu mặc định!", "warning");
-            authDB[currentUser.username] = p1; saveToDB('auth', authDB); currentUser.password = p1; await finishLogin();
-        }
-
-        function changeMyPassword() {
-            if (currentUser.username === 'admin') return showToast("Không đổi mật khẩu admin qua giao diện này!", "warning");
-            const p1 = document.getElementById('profNewPass').value.trim(); if(!p1) return showToast("Vui lòng nhập mật khẩu mới!", "error"); if(p1 === "1") return showToast("Không được dùng mật khẩu 1!", "error");
-            authDB[currentUser.username] = p1; saveToDB('auth', authDB); currentUser.password = p1; document.getElementById('profNewPass').value = ''; showToast("Đổi mật khẩu thành công!", "success");
-        }
-        function logout() { location.reload(); }
-
+            async function changeMyPassword() {
+                if (currentUser.username === 'admin') return showToast("Không đổi mật khẩu admin qua giao diện này!", "warning");
+                const p1 = document.getElementById('profNewPass').value.trim(); 
+                if(!p1) return showToast("Vui lòng nhập mật khẩu mới!", "error"); 
+                if(p1 === "1") return showToast("Không được dùng mật khẩu 1!", "error");
+                
+                try {
+                    await firebase.auth().currentUser.updatePassword(p1);
+                    document.getElementById('profNewPass').value = ''; 
+                    showToast("Đổi mật khẩu thành công!", "success");
+                } catch (error) {
+                    if(error.code === 'auth/requires-recent-login') {
+                        showToast("Bảo mật: Vui lòng tải lại trang, đăng nhập lại và đổi mật khẩu!", "error");
+                    } else {
+                        showToast("Lỗi: " + error.message, "error");
+                    }
+                }
+            }
+            
+            function logout() { 
+                firebase.auth().signOut().then(() => {
+                    location.reload(); 
+                });
+            }
        async function finishLogin() {
             try {
                 document.getElementById('loginOverlay').style.display = 'none'; 
