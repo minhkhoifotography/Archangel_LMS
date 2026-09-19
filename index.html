@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Corpus Christi LMS</title>
+    <link rel="icon" href="data:,">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
@@ -2271,7 +2272,11 @@
                 });
 
                 let tBtns = '';
-                if (c.id === 'viTien') {
+                if(canGrade) {
+                    CRITERIA.team.forEach(c => {
+                        let count = (t.stats && t.stats[c.id]) ? t.stats[c.id] : 0;
+                        let rowStyle = "";
+                        if (c.id === 'viTien') {
                             tBtns += `<div class="counter-row" style="${rowStyle}"><span style="color:#047857; font-weight:bold;"><i class="fa-solid fa-coins"></i> ${c.name}</span> <div style="display:flex; gap:5px; align-items:center;"><button class="btn-count" onclick="updateTeamWallet(${t.id}, -1)">-</button><span style="font-weight:bold; width:20px; text-align:center;">${count}</span><button class="btn-count" onclick="updateTeamWallet(${t.id}, 1)">+</button></div></div>`;
                         } else {
                             tBtns += `<div class="counter-row" style="${rowStyle}"><span>${c.name} (${c.point > 0 ? '+'+c.point : c.point})</span> <div style="display:flex; gap:5px; align-items:center;"><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', -1)">-</button><span style="font-weight:bold; width:20px; text-align:center;">${count}</span><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', 1)">+</button></div></div>`;
