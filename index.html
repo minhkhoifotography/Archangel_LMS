@@ -22,10 +22,8 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-storage.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
     
-    <!-- ========================================== -->
-    <!-- PHẦN THÊM MỚI: NHÚNG FILE CSS ĐÃ TÁCH -->
-    <!-- ========================================== -->
-    <link rel="stylesheet" href="assets/css/style.css">
+    <!-- NHÚNG FILE CSS -->
+    <link rel="stylesheet" href="./assets/css/style.css">
 </head>
 <body>
 
@@ -135,7 +133,6 @@
                     <button class="btn-outline" onclick="closeDeleteModal()">Chưa</button>
                 </div>
             </div>
-
             <div id="delModalStep2" style="display: none;">
                 <i class="fa-solid fa-skull-crossbones" style="font-size: 3rem; color: var(--danger); margin-bottom: 1rem;"></i>
                 <h2 style="font-size: 1.5rem; color: var(--danger);">Cảnh báo Mất Dữ Liệu</h2>
@@ -157,7 +154,6 @@
             </div>
             <h2>Corpus Christi LMS</h2>
         </div>
-        <!-- Cập nhật thẻ user-profile cho phép click -->
         <div class="user-profile" style="cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.background='transparent'" onclick="switchTab('profile', null)" title="Nhấn để xem Hồ Sơ Cá Nhân">
             <div class="avatar"><i class="fa-solid fa-user-tie"></i></div>
             <div class="user-info"><h4 id="displayUsername">User</h4><span class="user-role" id="displayRole">Role</span></div>
@@ -170,17 +166,13 @@
             <div class="nav-item" data-tab="behavior" onclick="switchTab('behavior', this)"><i class="fa-solid fa-sitemap"></i> Đội Nhóm & Thi Đua</div>
             <div class="nav-item" data-tab="tasks" onclick="switchTab('tasks', this)" style="border-left: 3px solid var(--success);"><i class="fa-solid fa-list-check"></i> Quản Lý Công Việc</div>
             <div class="nav-item" data-tab="reminders" onclick="switchTab('reminders', this)" style="border-left: 3px solid var(--warning);"><i class="fa-solid fa-bullhorn"></i> Bảng Nhắc Việc</div>
-            
             <div class="nav-item" data-tab="wheel" onclick="switchTab('wheel', this)" style="border-left: 3px solid var(--accent); background: rgba(202, 138, 4, 0.1); color: #fde047; font-weight: 600;"><i class="fa-solid fa-dharmachakra fa-spin" style="--fa-animation-duration: 10s;"></i> Vòng Quay May Mắn</div>
-            
             <div class="nav-item" data-tab="settings" onclick="switchTab('settings', this)" style="margin-top: 1rem;"><i class="fa-solid fa-sliders"></i> Cấu Hình Lớp Học</div>
             <div class="nav-item" data-tab="users" onclick="switchTab('users', this)"><i class="fa-solid fa-users-gear"></i> Quản Lý Nhân Sự</div>
             <div class="nav-item" data-tab="external-tool" onclick="switchTab('external-tool', this)"><i class="fa-solid fa-layer-group"></i> Tiện Ích Tích Hợp</div>
-
-           <div class="nav-item" data-tab="system-admin" id="navSystemAdmin" onclick="switchTab('system-admin', this)" style="display:none; color: #fca5a5; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-server"></i> Quản Trị Phân Quyền</div>
+            <div class="nav-item" data-tab="system-admin" id="navSystemAdmin" onclick="switchTab('system-admin', this)" style="display:none; color: #fca5a5; font-weight: bold; border-top: 1px solid rgba(255,255,255,0.05); margin-top: 0.5rem; padding-top: 1rem;"><i class="fa-solid fa-server"></i> Quản Trị Phân Quyền</div>
             <div class="nav-item" data-tab="glv-profile" id="navGLVProfile" onclick="switchTab('glv-profile', this)" style="display:none; color: #a78bfa; font-weight: bold;"><i class="fa-solid fa-address-card"></i> Hồ Sơ Giáo Lý Viên</div>
             <div class="nav-item" data-tab="year-admin" id="navYearAdmin" onclick="switchTab('year-admin', this)" style="display:none; color: #93c5fd; font-weight: bold;"><i class="fa-solid fa-calendar-check"></i> Quản Trị Năm Học</div>
-
             <div class="nav-item" data-tab="profile" onclick="switchTab('profile', this)" style="display: none;"><i class="fa-solid fa-id-badge"></i> Hồ Sơ Cá Nhân</div>
             <div class="nav-item" onclick="logout()" style="color: #f87171; margin-bottom: 1rem;"><i class="fa-solid fa-power-off"></i> Đăng xuất</div>
         </nav>
@@ -189,7 +181,6 @@
     <!-- Main Content -->
     <main class="main-content">
         <header class="topbar">
-            <!-- Cụm bên trái: Điều hướng & Lớp -->
             <div class="topbar-left">
                 <button class="mobile-menu-btn" onclick="toggleSidebar()"><i class="fa-solid fa-bars"></i></button>
                 <div class="year-badge">
@@ -204,8 +195,6 @@
                     <i class="fa-solid fa-xmark" id="btnDeleteClass" style="color: var(--danger); cursor: pointer; display: none; margin-left: 5px; font-size: 1.1rem; transition: 0.2s;" onclick="startDeleteProcess('class')" title="Xóa lớp học này"></i>
                 </div>
             </div>
-
-            <!-- Cụm bên phải: Trạng thái, Đồng hồ & Chuông -->
             <div class="topbar-right">
                 <div id="cloudStatus" class="cloud-status cloud-offline" onclick="forceSync()" title="Bấm để ép tải dữ liệu lên Đám mây">
                     <i class="fa-solid fa-cloud-arrow-up"></i> <span id="cloudStatusText">Đang tải...</span>
@@ -213,7 +202,6 @@
                 <div style="color: var(--text-muted); font-weight: 500; display: none;" id="desktopClock">
                     <i class="fa-regular fa-clock"></i> <span id="currentTime"></span>
                 </div>
-                <!-- Vùng Chuông Thông Báo -->
                 <div class="notification-wrapper">
                     <div class="notification-icon" onclick="toggleNotiDropdown()">
                         <i class="fa-solid fa-bell"></i>
@@ -233,7 +221,6 @@
         </header>
         
         <div class="content-area">
-            
             <!-- Dashboard Tab -->
             <div id="tab-dashboard" class="tab-content active">
                 <div class="page-header">
@@ -417,9 +404,7 @@
                         <p>Các công việc, thông báo chỉ mang tính nhắc nhở đang có hiệu lực đối với bạn.</p>
                     </div>
                 </div>
-                <div class="task-grid" id="reminderBoardGrid">
-                    <!-- JS đổ dữ liệu vào đây -->
-                </div>
+                <div class="task-grid" id="reminderBoardGrid"></div>
             </div>
 
             <!-- MODAL TẠO NHIỆM VỤ / NHẮC VIỆC CHUNG -->
@@ -427,8 +412,6 @@
                 <div class="auth-box" style="max-width: 600px; width: 95%; max-height: 90vh; overflow-y: auto;">
                     <h2>Phát Hành Mới</h2>
                     <form onsubmit="event.preventDefault(); submitNewTask();">
-                        
-                        <!-- Khu vực Chọn Loại Nhiệm Vụ (Đã được CSS Fix) -->
                         <div class="form-group" style="display: flex; gap: 20px; margin-bottom: 15px; background: #f1f5f9; padding: 12px 15px; border-radius: var(--radius-md); border: 1px solid var(--border); justify-content: center;">
                             <label class="radio-label-fix" style="cursor: pointer; color: var(--primary); font-weight: 700;">
                                 <input type="radio" name="taskType" value="task" checked onchange="toggleTaskTypeUI()"> Yêu Cầu Nộp Bài
@@ -438,11 +421,8 @@
                                 <input type="radio" name="taskType" value="reminder" onchange="toggleTaskTypeUI()"> Chỉ Nhắc Việc
                             </label>
                         </div>
-
                         <div class="form-group"><label>Tiêu đề</label><input type="text" id="ctTitle" required placeholder="Nhập tiêu đề..."></div>
-                        
                         <div class="form-group"><label>Người đại diện giao</label><select id="ctAssigner" class="excel-input" style="text-align: left;"></select></div>
-                        
                         <div class="form-group">
                             <label>Phạm vi áp dụng</label>
                             <div class="scope-scrollbox">
@@ -454,16 +434,12 @@
                                 <div id="scopeListContainer"></div>
                             </div>
                         </div>
-                        
                         <div class="form-group"><label>Nội dung chi tiết</label><textarea id="ctDesc" style="height: 60px;" placeholder="Yêu cầu cụ thể..."></textarea></div>
-                        
                         <div class="form-group" id="timeZoneTask"><label>Hạn chót nộp bài (Deadline)</label><input type="datetime-local" id="ctDeadline"></div>
-                        
                         <div class="form-group" id="timeZoneReminder" style="display: none; grid-template-columns: 1fr 1fr; gap: 10px;">
                             <div><label>Hiệu lực TỪ</label><input type="datetime-local" id="ctStartDate"></div>
                             <div><label>Hiệu lực ĐẾN</label><input type="datetime-local" id="ctEndDate"></div>
                         </div>
-                        
                         <div style="display: flex; gap: 10px; margin-top: 20px;">
                             <button type="button" class="btn-outline" style="flex: 1;" onclick="document.getElementById('createTaskModal').style.display='none'">Hủy</button>
                             <button type="submit" class="btn-primary" style="flex: 2;"><i class="fa-solid fa-paper-plane"></i> Gửi Đi</button>
@@ -508,18 +484,18 @@
                     </div>
                 </div>
             </div>
+
             <!-- Bảng Popup Lịch Sử Giao Dịch Ví Tiền -->
-    <div class="overlay-bg" id="moneyHistoryModal" style="display: none; z-index: 10006;">
-        <div class="auth-box" style="max-width: 500px; width: 95%;">
-            <div class="modal-header">
-                <h3 id="moneyModalTitle" style="color: #047857;"><i class="fa-solid fa-wallet"></i> Sao kê Ví Tiền</h3>
-                <button class="close-btn" onclick="document.getElementById('moneyHistoryModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+            <div class="overlay-bg" id="moneyHistoryModal" style="display: none; z-index: 10006;">
+                <div class="auth-box" style="max-width: 500px; width: 95%;">
+                    <div class="modal-header">
+                        <h3 id="moneyModalTitle" style="color: #047857;"><i class="fa-solid fa-wallet"></i> Sao kê Ví Tiền</h3>
+                        <button class="close-btn" onclick="document.getElementById('moneyHistoryModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+                    <div class="history-list" id="moneyModalBody" style="max-height: 400px; overflow-y: auto;"></div>
+                </div>
             </div>
-            <div class="history-list" id="moneyModalBody" style="max-height: 400px; overflow-y: auto;">
-                <!-- JS sẽ render lịch sử vào đây -->
-            </div>
-        </div>
-    </div>
+
             <!-- TAB MỚI: VÒNG QUAY MAY MẮN -->
             <div id="tab-wheel" class="tab-content">
                 <div class="page-header">
@@ -528,26 +504,17 @@
                         <button class="btn-action btn-outline" onclick="initWheel()"><i class="fa-solid fa-rotate-right"></i> Nạp lại danh sách</button>
                     </div>
                 </div>
-                
                 <div class="card" style="border-top: 5px solid var(--accent); background: linear-gradient(180deg, #ffffff 0%, #fdfbf7 100%);">
                     <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative;">
-                        <!-- Thẻ Audio Báo Thắng Cuộc -->
                         <audio id="winAudio" src="https://actions.google.com/sounds/v1/crowds/crowd_cheer.ogg" preload="auto"></audio>
                         <audio id="tadaAudio" src="https://actions.google.com/sounds/v1/cartoon/cartoon_success_fanfare.ogg" preload="auto"></audio>
-                        
                         <div style="position: relative; width: 100%; max-width: 450px; aspect-ratio: 1/1; margin: 2rem auto;">
-                            <!-- Vòng quay canvas -->
                             <canvas id="wheelCanvas" width="500" height="500" style="width: 100%; height: 100%; border-radius: 50%; box-shadow: 0 10px 25px rgba(0,0,0,0.15); border: 8px solid #f8fafc;"></canvas>
-                            
-                            <!-- Kim chỉ nam (Tam giác chĩa xuống) -->
                             <div style="position: absolute; top: -10px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 20px solid transparent; border-right: 20px solid transparent; border-top: 40px solid #dc2626; z-index: 10; filter: drop-shadow(0 4px 4px rgba(0,0,0,0.3));"></div>
-                            
-                            <!-- Nút bấm xoay ở giữa -->
                             <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 85px; height: 85px; background: white; border-radius: 50%; border: 5px solid var(--accent); box-shadow: inset 0 0 15px rgba(0,0,0,0.1), 0 0 20px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 5;" onclick="spinWheel()" id="spinBtnCenter">
                                 <span style="font-weight: 900; color: var(--accent); font-size: 1.4rem;">QUAY</span>
                             </div>
                         </div>
-                        
                         <div style="min-height: 80px; display: flex; align-items: center; justify-content: center;">
                             <h2 id="winnerName" style="color: #dc2626; font-family: 'Playfair Display', serif; font-size: 1.8rem; text-align: center; text-transform: uppercase; text-shadow: 2px 2px 4px rgba(0,0,0,0.1); margin: 0;"></h2>
                         </div>
@@ -558,7 +525,6 @@
             <!-- Settings Tab -->
             <div id="tab-settings" class="tab-content">
                 <div class="page-header"><div><h1>Cấu Hình Cơ Sở Lớp Học</h1><p>Công cụ Nạp, Sao Lưu và Quản lý dữ liệu.</p></div></div>
-                
                 <div class="card" style="border-top: 4px solid var(--danger);">
                     <div class="card-header"><span style="color: var(--danger); font-weight: 700;"><i class="fa-solid fa-database"></i> Nhập Dữ Liệu Học Sinh Hàng Loạt Từ Excel (Theo Chuẩn)</span></div>
                     <div class="card-body">
@@ -587,7 +553,6 @@
                         </div>
                         <div class="flex-wrap-mobile" style="display: flex; gap: 10px; align-items:flex-end;">
                             <button class="btn-action" style="background: var(--warning);" onclick="backupData()"><i class="fa-solid fa-download"></i> Tải File Sao Lưu (Backup)</button>
-                            
                             <label class="btn-action" style="background: var(--danger); cursor: pointer;">
                                 <i class="fa-solid fa-upload"></i> Phục Hồi Dữ Liệu (Restore)
                                 <input type="file" accept=".json" style="display:none" onchange="restoreData(event)">
@@ -596,7 +561,6 @@
                     </div>
                 </div>
 
-                <!-- CƠ CHẾ BẢO TỒN VÀ KHÔI PHỤC TỪ ĐÁM MÂY (MASTER LIST) -->
                 <div class="card" style="border-top: 4px solid var(--success); margin-top: 1.5rem;">
                     <div class="card-header"><span style="color: var(--success); font-weight: 700;"><i class="fa-solid fa-cloud-arrow-down"></i> Phục Hồi Tổ Từ Danh Sách Đám Mây</span></div>
                     <div class="card-body">
@@ -699,7 +663,6 @@
                 <div class="page-header">
                     <div><h1 style="color: #a78bfa;">Hồ Sơ Giáo Lý Viên</h1><p>Quản lý lý lịch, thông tin cá nhân và tài khoản đăng nhập của Ban Huynh trưởng - Giáo lý viên.</p></div>
                 </div>
-                
                 <div class="card">
                     <div class="card-header" style="background: #f0fdfa; border-bottom: 2px solid #14b8a6;"><span style="color: #0f766e;"><i class="fa-solid fa-user-tie"></i> Kênh Khởi Tạo / Cập Nhật Nhanh GLV</span></div>
                     <div class="table-responsive" style="border-radius: 0 0 var(--radius-md) var(--radius-md); padding-bottom: 5px;">
@@ -745,11 +708,8 @@
                 <div class="card" style="border-top: 4px solid #8b5cf6;">
                     <div class="card-header">
                     <span style="color: #8b5cf6; font-weight: 700;"><i class="fa-solid fa-address-book"></i> Danh Sách Hồ Sơ Huynh Trưởng - GLV</span>
-                    <button class="btn-action" style="background: #8b5cf6; padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="exportGLVProfiles()">
-                        <i class="fa-solid fa-file-excel"></i> Tải Về Dữ Liệu
-                    </button>
+                    <button class="btn-action" style="background: #8b5cf6; padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="exportGLVProfiles()"><i class="fa-solid fa-file-excel"></i> Tải Về Dữ Liệu</button>
                 </div>
-                
                 <div class="table-responsive" style="max-height: 60vh; overflow-y: auto;">
                     <table class="excel-table">
                             <thead>
@@ -770,7 +730,6 @@
                     </div>
                 </div>
 
-                <!-- Bảng Quản Lý Mật Khẩu -->
                 <div class="card" style="border-top: 4px solid #f43f5e;">
                     <div class="card-header"><span style="color: #e11d48; font-weight: 700;"><i class="fa-solid fa-key"></i> Quản Lý Mật Khẩu Hệ Thống</span></div>
                     <div class="table-responsive" style="max-height: 40vh; overflow-y: auto;">
@@ -805,9 +764,7 @@
                 <div class="card" style="border-top: 4px solid var(--primary); margin-top: 1.5rem;">
                     <div class="card-header">
                         <span style="font-weight: 700; color: var(--primary);"><i class="fa-solid fa-server"></i> Nạp Dữ Liệu Phân Công (Excel) Vào Năm Học Này</span>
-                        <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="downloadAdminTemplate()">
-                            <i class="fa-solid fa-file-arrow-down"></i> Tải File Mẫu
-                        </button>
+                        <button class="btn-outline" style="padding: 0.4rem 0.8rem; font-size: 0.85rem;" onclick="downloadAdminTemplate()"><i class="fa-solid fa-file-arrow-down"></i> Tải File Mẫu</button>
                     </div>
                     <div class="card-body">
                         <div style="background: #f1f5f9; padding: 1rem; border-radius: var(--radius-md); border: 1px solid var(--border); margin-bottom: 1.5rem;">
@@ -816,24 +773,17 @@
                         </div>
                         <div class="file-upload-wrapper">
                             <input type="file" id="adminUpload" accept=".xlsx, .xls, .csv" onchange="handleAdminMassAssignment(event)">
-                            <div class="file-upload-btn" style="background: white; border-color: var(--primary); color: var(--primary);">
-                                <i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 10px;"></i><br>Tải File Phân Công Lên Máy Chủ
-                            </div>
+                            <div class="file-upload-btn" style="background: white; border-color: var(--primary); color: var(--primary);"><i class="fa-solid fa-cloud-arrow-up" style="font-size: 1.5rem; margin-bottom: 10px;"></i><br>Tải File Phân Công Lên Máy Chủ</div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Year Admin Tab (QUẢN LÝ NĂM HỌC TỔNG) -->
+            <!-- Year Admin Tab -->
             <div id="tab-year-admin" class="tab-content">
                 <div class="page-header">
-                    <div>
-                        <h1 style="color: var(--info);">Quản Trị Năm Học</h1>
-                        <p>Bảng điểm tổng quát và thiết lập thời hạn (deadline) của hệ thống trong năm học hiện tại.</p>
-                    </div>
+                    <div><h1 style="color: var(--info);">Quản Trị Năm Học</h1><p>Bảng điểm tổng quát và thiết lập thời hạn (deadline) của hệ thống trong năm học hiện tại.</p></div>
                 </div>
-
-                <!-- KHU VỰC MỚI: THIẾT LẬP KHÓA SỔ NHẬP Điểm -->
                 <div class="card" style="border-top: 4px solid var(--danger);">
                     <div class="card-header"><span style="font-weight: 700; color: var(--danger);"><i class="fa-solid fa-lock"></i> Thiết Lập Thời Gian Khóa Sổ Nhập Điểm</span></div>
                     <div class="card-body" style="padding: 0;">
@@ -871,8 +821,6 @@
                         </div>
                     </div>
                 </div>
-
-                <!-- BẢNG VÀNG TỔNG KẾT NĂM HỌC GIỮ NGUYÊN -->
                 <div class="card" style="border-top: 4px solid var(--info); margin-top: 1.5rem;">
                     <div class="card-header"><span style="font-weight: 700; color: var(--info);"><i class="fa-solid fa-ranking-star"></i> Bảng Vàng Tổng Kết Năm Học <span id="summaryYearLabel"></span></span></div>
                     <div class="card-body" style="padding: 0;">
@@ -885,18 +833,10 @@
                     </div>
                 </div>
             </div>
-
-            </div> <!-- THÊM DÒNG NÀY: Đóng thẻ content-area -->
-    </main> <!-- THÊM DÒNG NÀY: Đóng thẻ main-content -->
-
-    <!-- ========================================== -->
-    <!-- KẾT THÚC PHẦN HTML GIAO DIỆN -->
-    <!-- ========================================== -->
-
-
-    <!-- ========================================== -->
-    <!-- PHẦN THÊM MỚI: NHÚNG FILE JS CHÍNH BẰNG MODULE -->
-    <!-- ========================================== -->
-    <script type="module" src="assets/js/main.js"></script>
+        </div>
+    </main>
+    
+    <!-- NHÚNG SCRIPT TIÊU CHUẨN (KHÔNG DÙNG MODULE) -->
+    <script src="./assets/js/app.js"></script>
 </body>
 </html>
