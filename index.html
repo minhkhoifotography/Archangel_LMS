@@ -927,6 +927,18 @@
                     </div>
                 </div>
             </div>
+            <!-- Bảng Popup Lịch Sử Giao Dịch Ví Tiền -->
+    <div class="overlay-bg" id="moneyHistoryModal" style="display: none; z-index: 10006;">
+        <div class="auth-box" style="max-width: 500px; width: 95%;">
+            <div class="modal-header">
+                <h3 id="moneyModalTitle" style="color: #047857;"><i class="fa-solid fa-wallet"></i> Sao kê Ví Tiền</h3>
+                <button class="close-btn" onclick="document.getElementById('moneyHistoryModal').style.display='none'"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="history-list" id="moneyModalBody" style="max-height: 400px; overflow-y: auto;">
+                <!-- JS sẽ render lịch sử vào đây -->
+            </div>
+        </div>
+    </div>
             <!-- TAB MỚI: VÒNG QUAY MAY MẮN -->
             <div id="tab-wheel" class="tab-content">
                 <div class="page-header">
@@ -1402,8 +1414,12 @@
             
             data.teams = toArray(data.teams);
             data.teams.forEach(t => {
+                // THÊM DÒNG NÀY VÀO ĐÂY (Ngay dưới dòng 404 của bạn):
+                    if(!t.moneyHistory) t.moneyHistory = [];
+                
                 t.members = toArray(t.members);
                 t.members.forEach(m => {
+                    
                     if(!m.tenThanh) m.tenThanh = "";
                     if(!m.name) m.name = "";
                     if(!m.role) m.role = "member"; 
@@ -1957,6 +1973,13 @@
             }
             saveToDB(`classes/${activeYear}/${currentViewClass}`, state); 
         }
+        // Hàm mới: Chỉ đẩy đúng đoạn dữ liệu nhỏ lên Cloud để chống ghi đè
+        function updateToCloud(subPath, value) {
+                if (isCloudConnected && db) {
+                let fullPath = `classes/${activeYear}/${currentViewClass}/${subPath}`;
+        db.ref(fullPath).set(value).catch(e => console.error("Lỗi đồng bộ cục bộ:", e));
+                }
+        }
 
         function calcStudentPts(stats) { if(!stats) return 0; let total = 0; CRITERIA.student.forEach(c => total += (stats[c.id] || 0) * c.point); return total; }
         function calcTeamPts(team) { let total = team.members.reduce((sum, m) => sum + calcStudentPts(m.stats), 0); let tStats = team.stats || {}; CRITERIA.team.forEach(c => total += (tStats[c.id] || 0) * c.point); return total; }
@@ -2248,16 +2271,16 @@
                 });
 
                 let tBtns = '';
-                if (canGrade) {
-                    CRITERIA.team.forEach(c => {
-                        let count = (t.stats && t.stats[c.id]) || 0;
-                        let rowStyle = c.id === 'viTien' ? 'background: #ecfdf5; border-color: #10b981;' : ''; 
-                        tBtns += `<div class="counter-row" style="${rowStyle}"><span style="${c.id === 'viTien' ? 'color:#047857; font-weight:bold;' : ''}">${c.id === 'viTien' ? '<i class="fa-solid fa-coins"></i> ' : ''}${c.name} (${c.point > 0 ? '+'+c.point : c.point})</span> <div style="display:flex; gap:5px; align-items:center;"><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', -1)">-</button><span style="font-weight:bold; width:20px; text-align:center;">${count}</span><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', 1)">+</button></div></div>`;
+                if (c.id === 'viTien') {
+                            tBtns += `<div class="counter-row" style="${rowStyle}"><span style="color:#047857; font-weight:bold;"><i class="fa-solid fa-coins"></i> ${c.name}</span> <div style="display:flex; gap:5px; align-items:center;"><button class="btn-count" onclick="updateTeamWallet(${t.id}, -1)">-</button><span style="font-weight:bold; width:20px; text-align:center;">${count}</span><button class="btn-count" onclick="updateTeamWallet(${t.id}, 1)">+</button></div></div>`;
+                        } else {
+                            tBtns += `<div class="counter-row" style="${rowStyle}"><span>${c.name} (${c.point > 0 ? '+'+c.point : c.point})</span> <div style="display:flex; gap:5px; align-items:center;"><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', -1)">-</button><span style="font-weight:bold; width:20px; text-align:center;">${count}</span><button class="btn-count" onclick="updateTeamPoint(${t.id}, '${c.id}', 1)">+</button></div></div>`;
+                        }
                     });
                 }
                 
                 let teamNameInput = `<input type="text" class="excel-input" value="${esc(t.name)}" onblur="updateTeamName(${t.id}, this.value)" style="font-weight:700; font-size:1.1rem; text-align:left; width:130px; padding:0.2rem 0.5rem; color:var(--primary); background:transparent; ${canGrade ? 'border-bottom: 1px dashed #cbd5e1;' : 'border:none;'}" ${canGrade ? '' : 'disabled'} title="Nhấn vào để sửa tên tổ">`;
-                let walletBadge = `<span style="background:#10b981; color:white; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; margin-left:5px; white-space:nowrap; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3);" title="Ví tiền thưởng"><i class="fa-solid fa-wallet"></i> ${viTien} ₫</span>`;
+                let walletBadge = `<span onclick="showMoneyHistory(${t.id})" style="cursor:pointer; background:#10b981; color:white; padding:0.2rem 0.6rem; border-radius:20px; font-size:0.8rem; margin-left:5px; white-space:nowrap; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.3); transition: 0.2s;" onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'" title="Nhấn để xem Sao kê Ví Tiền"><i class="fa-solid fa-wallet"></i> ${viTien} ₫</span>`;
 
                 // WRAPPER CHO LIST HỌC SINH ĐỂ KÉO THẢ
                 let sortableContainer = `<div class="sortable-team-list" data-team-id="${t.id}" style="min-height: 50px; padding-bottom: 20px;">${membersHtml}</div>`;
@@ -2447,21 +2470,182 @@
             }
         }
 
-        function updatePoint(tId, mId, critId, delta) {
-            if(currentUser.role === 'collab') return;
-            let t = state.teams.find(x => x.id == tId); let m = t.members.find(x => x.id == mId);
-            if(!m.stats[critId]) m.stats[critId] = 0;
-            m.stats[critId] += delta; if(m.stats[critId] < 0) m.stats[critId] = 0;
-            autoSave(); renderBehaviorTeams(); renderDashboard();
+        // 1. Hàm chấm điểm cá nhân (Đã chống ghi đè)
+function updatePoint(tId, mId, critId, delta) {
+    if(currentUser.role === 'collab') return;
+    
+    // Tìm vị trí chính xác của Tổ và Học sinh trong mảng
+    let tIndex = state.teams.findIndex(x => x.id == tId);
+    let mIndex = state.teams[tIndex].members.findIndex(x => x.id == mId);
+    let m = state.teams[tIndex].members[mIndex];
+
+    if(!m.stats[critId]) m.stats[critId] = 0;
+    m.stats[critId] += delta; 
+    if(m.stats[critId] < 0) m.stats[critId] = 0;
+
+    // Cập nhật giao diện trên màn hình của mình
+    renderBehaviorTeams(); 
+    if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+
+    // CHỈ đẩy đúng điểm số của tiêu chí này lên Firebase
+    updateToCloud(`teams/${tIndex}/members/${mIndex}/stats/${critId}`, m.stats[critId]);
+    
+    // Lưu dự phòng offline vào máy
+    localStorage.setItem(`LMS_CLASS_V44_${activeYear}_${currentViewClass}`, JSON.stringify(state));
+}
+
+// 2. Hàm chấm điểm tập thể (Đã chống ghi đè)
+function updateTeamPoint(tId, critId, delta) {
+    if(currentUser.role === 'collab') return;
+    
+    let tIndex = state.teams.findIndex(x => x.id == tId);
+    let t = state.teams[tIndex];
+
+    if(!t.stats) t.stats = {}; 
+    if(!t.stats[critId]) t.stats[critId] = 0;
+    t.stats[critId] += delta; 
+    if(t.stats[critId] < 0) t.stats[critId] = 0;
+
+    // Cập nhật giao diện trên màn hình của mình
+    renderBehaviorTeams(); 
+    if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+
+    // CHỈ đẩy đúng điểm số của tiêu chí tập thể này lên Firebase
+    updateToCloud(`teams/${tIndex}/stats/${critId}`, t.stats[critId]);
+    
+    // Lưu dự phòng offline vào máy
+    localStorage.setItem(`LMS_CLASS_V44_${activeYear}_${currentViewClass}`, JSON.stringify(state));
+}
+
+        // Hàm mới: Chuyên xử lý giao dịch Ví Tiền (Cộng/Trừ có lý do và lưu lịch sử)
+function updateTeamWallet(tId, delta) {
+    if(currentUser.role === 'collab') return showToast("Hỗ trợ viên không được xử lý tiền!", "error");
+    
+    let tIndex = state.teams.findIndex(x => x.id == tId);
+    let t = state.teams[tIndex];
+
+    if(!t.stats) t.stats = {}; 
+    if(!t.stats['viTien']) t.stats['viTien'] = 0;
+    if(!t.moneyHistory) t.moneyHistory = [];
+
+    let currentBalance = t.stats['viTien'];
+    
+    // Nếu là thao tác Trừ tiền, hiện Popup hỏi lý do
+    let reason = "Biến động số dư";
+    if (delta < 0) {
+        if (currentBalance + delta < 0) {
+            return showToast("Lỗi: Tổ này không đủ tiền trong ví để trừ!", "error");
         }
+        reason = prompt(`Bạn đang TRỪ ${Math.abs(delta)}đ của Tổ ${t.name}.\nVui lòng nhập lý do trừ tiền (Ví dụ: Mua đồ chơi, Phạt...):`);
+        if (reason === null) return; // Người dùng bấm Hủy
+        if (reason.trim() === '') reason = "Trừ tiền không rõ lý do";
+    } else {
+        // Nếu là thao tác Cộng tiền (có thể hỏi lý do hoặc để mặc định)
+        let note = prompt(`Bạn đang CỘNG ${delta}đ cho Tổ ${t.name}.\nNhập lý do cộng (Để trống nếu cộng điểm thưởng bình thường):`);
+        if (note === null) return;
+        reason = note.trim() !== '' ? note.trim() : "Điểm thưởng phát sinh";
+    }
+
+    // Thực hiện giao dịch
+    t.stats['viTien'] += delta;
+    
+    // Ghi lại lịch sử giao dịch
+    let transaction = {
+        id: Date.now(),
+        time: new Date().toLocaleString('vi-VN'),
+        amount: delta,
+        type: delta > 0 ? 'in' : 'out',
+        reason: reason,
+        actor: currentUser.username
+    };
+    t.moneyHistory.unshift(transaction); // Đưa giao dịch mới nhất lên đầu mảng
+
+    // Cập nhật giao diện
+    renderBehaviorTeams(); 
+    if(document.getElementById('tab-dashboard').classList.contains('active')) renderDashboard();
+
+    // Đồng bộ lên Cloud
+    updateToCloud(`teams/${tIndex}/stats/viTien`, t.stats['viTien']);
+    updateToCloud(`teams/${tIndex}/moneyHistory`, t.moneyHistory);
+    localStorage.setItem(`LMS_CLASS_V44_${activeYear}_${currentViewClass}`, JSON.stringify(state));
+    
+    showToast(`Đã ${delta > 0 ? 'cộng' : 'trừ'} tiền thành công!`, "success");
+}
+
+        // Hàm hiển thị Lịch sử Ví Tiền
+function showMoneyHistory(tId) {
+    let t = state.teams.find(x => x.id == tId);
+    if (!t) return;
+    
+    document.getElementById('moneyModalTitle').innerHTML = `<i class="fa-solid fa-wallet"></i> Sao kê Ví Tiền: ${t.name}`;
+    
+    let listHtml = '';
+    
+    if (!t.moneyHistory || t.moneyHistory.length === 0) {
+        listHtml = `<div style="padding:2rem; text-align:center; color:var(--text-muted); font-style: italic;">Chưa có giao dịch nào được ghi nhận.</div>`;
+    } else {
+        t.moneyHistory.forEach(trans => {
+            let isAdd = trans.type === 'in';
+            let color = isAdd ? '#166534' : '#991b1b';
+            let bg = isAdd ? '#f0fdf4' : '#fef2f2';
+            let sign = isAdd ? '+' : '-';
+            
+            // Nếu muốn làm chức năng xóa giao dịch (hoàn tác)
+            let btnDelete = '';
+            if (currentUser.role === 'admin' || currentUser.role === 'lead') {
+                btnDelete = `<button class="btn-reject" style="padding:0.2rem 0.5rem; font-size:0.75rem;" onclick="deleteMoneyTransaction(${t.id}, ${trans.id})" title="Xóa bỏ giao dịch này"><i class="fa-solid fa-trash"></i></button>`;
+            }
+
+            listHtml += `
+            <div class="history-item" style="background: ${bg}; border-radius: 8px; margin-bottom: 8px; padding: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid ${isAdd ? '#bbf7d0' : '#fecaca'};">
+                <div style="flex: 1;">
+                    <div style="font-weight:700; color:${color}; font-size: 1.1rem;">${sign}${Math.abs(trans.amount)} ₫</div>
+                    <div style="font-size:0.85rem; font-weight: 600; margin-top: 2px;">${esc(trans.reason)}</div>
+                    <div style="font-size:0.75rem; color:var(--text-muted); margin-top: 4px;"><i class="fa-regular fa-clock"></i> ${trans.time} - GLV: ${trans.actor}</div>
+                </div>
+                ${btnDelete}
+            </div>`;
+        });
+    }
+    
+    document.getElementById('moneyModalBody').innerHTML = listHtml;
+    document.getElementById('moneyHistoryModal').style.display = 'flex';
+}
+
+// Hàm bổ sung: Cho phép Admin/Lead xóa một giao dịch bị nhầm lẫn
+function deleteMoneyTransaction(tId, transId) {
+    if (!confirm("Bạn có chắc muốn xóa giao dịch này? Số dư ví sẽ được tự động hoàn lại.")) return;
+    
+    let tIndex = state.teams.findIndex(x => x.id == tId);
+    let t = state.teams[tIndex];
+    if (!t) return;
+    
+    let transIndex = t.moneyHistory.findIndex(x => x.id == transId);
+    if (transIndex > -1) {
+        let trans = t.moneyHistory[transIndex];
         
-        function updateTeamPoint(tId, critId, delta) {
-            if(currentUser.role === 'collab') return;
-            let t = state.teams.find(x => x.id == tId);
-            if(!t.stats) t.stats = {}; if(!t.stats[critId]) t.stats[critId] = 0;
-            t.stats[critId] += delta; if(t.stats[critId] < 0) t.stats[critId] = 0;
-            autoSave(); renderBehaviorTeams(); renderDashboard();
+        // Hoàn lại số dư
+        if (trans.type === 'in') {
+            t.stats['viTien'] -= trans.amount;
+        } else {
+            t.stats['viTien'] -= trans.amount; // trans.amount của loại trừ bản thân nó mang dấu âm, nên trừ đi phần âm tức là cộng lại
         }
+        if (t.stats['viTien'] < 0) t.stats['viTien'] = 0; // Chống âm tiền
+        
+        // Xóa khỏi mảng lịch sử
+        t.moneyHistory.splice(transIndex, 1);
+        
+        // Đồng bộ
+        updateToCloud(`teams/${tIndex}/stats/viTien`, t.stats['viTien']);
+        updateToCloud(`teams/${tIndex}/moneyHistory`, t.moneyHistory);
+        localStorage.setItem(`LMS_CLASS_V44_${activeYear}_${currentViewClass}`, JSON.stringify(state));
+        
+        // Render lại giao diện
+        showMoneyHistory(tId);
+        renderBehaviorTeams();
+        showToast("Đã hoàn tác giao dịch!", "success");
+    }
+}
 
         function closeHistory() { document.getElementById('historyModal').style.display = 'none'; }
 
